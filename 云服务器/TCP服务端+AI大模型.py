@@ -1,6 +1,7 @@
 from openai import OpenAI
-import os
 import socket
+import os
+import json
 
 """
 功能：
@@ -9,14 +10,14 @@ import socket
 返回值：
     正常：返回回复的消息 出错：False
 """
-def get_response(client, messages, model, stream=False):
+def get_ai_response(client, messages, model, stream=False):
     try:
         response_messages = "" # 用于保存回复的消息
 
         response = client.chat.completions.create( # 获取到回复的消息
             model = model,
             messages = messages,
-            stream = stream
+            stream = stream,
         )
 
         if stream: # True：流式输出
@@ -32,7 +33,62 @@ def get_response(client, messages, model, stream=False):
     except Exception as e:
         print(f"API 请求错误：{str(e)}")
 
-        return False
+        return "AI API 请求错误！"
+
+"""
+功能：
+    验证并过滤AI的设备操作指令
+参数：
+    原始指令字典
+返回值：
+    过滤后的安全指令字典
+"""
+def validate_ai_actions(actions):
+    safe_actions = {}
+
+    for device, cmd in actions.items():
+        clean_cmd = cmd.lower() # 统一转换为小写
+
+        if clean_cmd in white_list.values():
+            safe_actions[device] = clean_cmd
+        else:
+            print(f"非法指令拦截: {cmd}")
+
+    return safe_actions
+
+"""
+功能：
+    处理AI响应的消息
+参数：
+    response: AI返回的原始JSON字符串
+返回值：
+    给STM32的安全指令
+"""
+def process_ai_response(ai_response):
+    try:
+        response_data = json.loads(ai_response) # 解析JSON
+
+        actions = response_data.get('action', {}) # 提取action字段
+
+        safe_actions = validate_ai_actions(actions) # 白名单过滤
+
+        message = response_data.get('message', '执行成功')
+
+        if safe_actions:
+            # action_str = ", ".join([f"{device}:{cmd}" for device, cmd in safe_actions.items()])
+            action_str = ", ".join([f"{cmd}" for device, cmd in safe_actions.items()])
+            return f"action = {action_str}; message = {message}\r\n"
+        else:
+            return f"action = 0; message = {message}\r\n"
+
+    except Exception as e:
+        print(f"处理异常: {str(e)}")
+        return "action = 0; message = 系统服务暂不可用\r\n"
+
+
+
+
+
 
 
 """
@@ -50,9 +106,47 @@ api_key=os.environ.get("DOUYIN_API_KEY") # 从环境变量中读取您的方舟A
 base_url="https://ark.cn-beijing.volces.com/api/v3"
 model="doubao-1.5-pro-256k-250115"
 
+# 设备指令白名单库
+white_list = {
+    '开灯':'led_up',
+    '关灯':'led_down',
+    '开空调':'ac_on',
+    '关空调':'ac_off',
+    '调节风速':'fan_speed',
+    '蜂鸣器报警':'buzzer_up',
+    '取消蜂鸣器报警':'buzzer_off',
+}
+white_list_str = ",".join([f"{device}:{cmd}" for device, cmd in white_list.items()])
+
+# AI 提示词指令
+ai_order = """
+        【角色设定】
+        你是一个智能家居控制中枢，叫大白，自然语言回复会带上各种表情包来体现你的面部表情，且
+        能够理解用户的环境状态描述并主动控制对应设备。请根据对话内容判断是否需要触发硬件操作。
+        你。
+        【任务规则】
+        1、你必须且只能使用以下JSON格式响应，禁止其他形式：
+        {
+            "code": 20,  # 必填！状态码(20: 设备操作和对话 21: 仅对话)
+            "action": {"[设备名]": "[操作指令]"},  # 键值对，空对象表示无操作
+            "message": ""  # 自然语言回复，带环境描述的拟人化回复
+        }
+        2、当用户描述环境状态变化时（如光线变暗、温度变化等），立即检索对应的可控设备
+        3、设备名称需与可控设备名称严格一致
+        【设备映射表】
+        提示：':'前面是设备名，后面是操作指令,设备指令用','隔开了
+        %s
+        【示例】
+        {
+            "code": 20,
+            "action": {"取消蜂鸣器报警": "buzzer_off"},
+            "message": "警器已关闭咯"
+        }
+        """ % white_list_str
+
 messages = [
-    {"role": "system", "content": "你叫大白，会根据用户提问的语言，选择回答的语言，并且会带上各种表情包来体现你的面部表情。"},
-    {"role": "user", "content": "你好呀！，我叫轻歌"}
+    {"role": "system", "content": ai_order},
+    {"role": "user", "content": "你好，我叫轻歌！"},
     # {"role": "assistant", "content": "我......"}
 ]
 stream = False # True：流式输出 默认是False：非流式输出
@@ -80,9 +174,10 @@ if __name__ == '__main__':
     print("连接客户端成功！")
 
     # 5、使用recv()/send()方法接收/发送数据
-    response_messages = get_response(client, messages, model, stream) #获取 AI大模型 的回复
-    print(response_messages)
-    client_socket.send(response_messages.encode("utf-8")) # 给客户端打个招呼
+    response_messages = get_ai_response(client, messages, model, stream) #获取 AI大模型 的回复
+    print("我回复的消息：", response_messages)
+    ai_message = process_ai_response(response_messages)
+    client_socket.send(ai_message.encode("utf-8")) # 给客户端打个招呼
 
     while True:
         try:
@@ -94,9 +189,10 @@ if __name__ == '__main__':
             print("用户消息：", user_messages.decode("utf-8"))
 
             messages.append({"role": "user", "content": user_messages.decode("utf-8")}) # 添加用户的消息到历史对话记录
-            response_messages = get_response(client, messages, model, stream)
+            response_messages = get_ai_response(client, messages, model, stream)
             print("我回复的消息：", response_messages)
-            client_socket.send(response_messages.encode("utf-8"))
+            ai_message = process_ai_response(response_messages)
+            client_socket.send(ai_message.encode("utf-8"))
 
             if user_messages.decode("utf-8").lower() in ["再见", "回聊", "拜", "bye", "退出", "quit", "exit"]:
                 break

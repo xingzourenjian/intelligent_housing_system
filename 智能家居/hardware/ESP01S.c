@@ -21,9 +21,9 @@ void ESP01S_init(void)
     print_ESP01S_send_message(1);
     send_cmd_to_ESP01S("AT+CIPSTART=0,\"TCP\",\"47.86.228.121\",8086\r\n"); // 建立TCP连接
     print_ESP01S_send_message(2);
-    send_cmd_to_ESP01S("AT+CIPSEND=0,40\r\n"); // 向服务器发数据，id=0，字节长度：12
+    send_cmd_to_ESP01S("AT+CIPSEND=0,39\r\n"); // 向服务器发数据，id=0，字节长度：12
     print_ESP01S_send_message(1);
-    send_cmd_to_ESP01S("你回答我一个英文，即：led_off那你么么么么么m");
+    send_cmd_to_ESP01S("报警器有点吵，影响我睡觉了\r\n");
     print_ESP01S_send_message(5);
 }
 
@@ -46,11 +46,50 @@ void print_ESP01S_send_message(uint8_t count)
         while(1)
         {
             p_str = get_ESP01S_message();
+            ai_response_process(p_str);
             if(strcmp(p_str, "NULL") != 0)
             {
-                printf("%s\r\n", p_str);
+                serial_send_string(p_str);
+                serial_send_string("\r\n");
                 break;
             }
         }
+    }
+}
+
+/*
+功能：
+    处理AI响应的消息
+参数：
+    response: AI返回的消息
+返回值：
+    void */
+void ai_response_process(char* ai_response)
+{
+    char *action_ptr = strstr(ai_response, "action = "); // 指向'a'
+    char *msg_ptr = strstr(ai_response, "message = ");
+    
+    // 提取action值
+    if(action_ptr)
+    {
+        char action_val[16] = {0};
+        sscanf(action_ptr, "action = %15[^;]", action_val);
+        
+        if(strcmp(action_val, "buzzer_up") == 0)
+        {
+            buzzer_up();
+        }
+        else if(strcmp(action_val, "buzzer_off") == 0)
+        {
+            buzzer_off();
+        }
+    }
+
+    // 提取消息内容
+    if(msg_ptr)
+    {
+        char message[128];
+        sscanf(msg_ptr, "message=%127[^\n]", message);
+        serial_send_string(message);
     }
 }
