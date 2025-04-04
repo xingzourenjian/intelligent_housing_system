@@ -1,4 +1,3 @@
-#include "stm32f10x.h"
 #include "serial.h"
 
 static char serial_rx_packet[SERIAL_MAX_RECV_LEN] = {0};
@@ -148,4 +147,3 @@ void USART1_IRQHandler(void)
     	// RXNE位也可以通过写入0来清除
     }
 }
-

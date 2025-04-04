@@ -1,11 +1,15 @@
 #ifndef __ESP01S_H__
 #define __ESP01S_H__
 
+#include "stm32f10x.h"
+#include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
-#include "UART3.h"
 #include "serial.h"
 #include "delay.h"
 #include "buzzer.h"
+
+#define UART3_MAX_RECV_LEN 1024
 
 void ESP01S_init(void);
 

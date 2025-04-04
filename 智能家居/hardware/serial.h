@@ -1,6 +1,8 @@
 #ifndef __SERIAL_H__
 #define __SERIAL_H__
 
+#include "stm32f10x.h"
+
 #define SERIAL_MAX_RECV_LEN 400
 
 void serial_init(void);

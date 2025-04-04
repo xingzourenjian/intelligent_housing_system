@@ -1,4 +1,4 @@
-#include "stm32f10x.h"
+#include "OLED.h"
 #include "OLED_Font.h"
 
 /*引脚配置*/

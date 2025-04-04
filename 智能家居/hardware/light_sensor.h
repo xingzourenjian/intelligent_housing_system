@@ -1,7 +1,7 @@
 #ifndef __LIGHT_SENSOR_H__
 #define __LIGHT_SENSOR_H__
 
-#include "ADC.h"
+#include "stm32f10x.h"
 #include "OLED.h"
 
 void light_sensor_init(void);

@@ -1,6 +1,8 @@
 #ifndef __OLED_H__
 #define __OLED_H__
 
+#include "stm32f10x.h"
+
 void OLED_Init(void);
 
 void OLED_Clear(void);

@@ -1,4 +1,3 @@
-#include "stm32f10x.h"
 #include "buzzer.h"
 
 // PA8 蜂鸣器
@@ -23,4 +22,3 @@ void buzzer_off(void)
 {
 	GPIO_ResetBits(GPIOA, GPIO_Pin_8);
 }
-

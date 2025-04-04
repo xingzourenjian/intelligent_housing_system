@@ -1,22 +1,14 @@
-#include "stm32f10x.h"
-#include <string.h>
-#include "delay.h"
-#include "buzzer.h"
-#include "light_sensor.h"
-#include "OLED.h"
-#include "serial.h"
-#include "servo.h"
-#include "ESP01S.h"
+#include "main.h"
 
 int main(int argc, const char *argv[])
 {
     serial_init();
     buzzer_GPIO_init();
-    buzzer_up();
+    //buzzer_up();
     ESP01S_init();
-    
-	while(1)
+
+    while(1)
     {
-        
+
     }
 }
