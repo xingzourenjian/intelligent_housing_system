@@ -3,12 +3,11 @@
 int main(int argc, const char *argv[])
 {
     serial_init();
-    buzzer_GPIO_init();
-    //buzzer_up();
+    buzzer_init();
     ESP01S_init();
-
+    
     while(1)
     {
-
+        
     }
 }

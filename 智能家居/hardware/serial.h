@@ -2,14 +2,13 @@
 #define __SERIAL_H__
 
 #include "stm32f10x.h"
+#include <string.h> // 定义了NULL
 
 #define SERIAL_MAX_RECV_LEN 400
 
 void serial_init(void);
 
 void serial_send_byte(char byte);
-
-void serial_send_array(char *array, uint16_t length);
 
 void serial_send_string(char *string);
 

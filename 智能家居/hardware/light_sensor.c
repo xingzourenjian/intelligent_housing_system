@@ -4,7 +4,7 @@ static void ADC_init(uint16_t GPIO_Pin, uint8_t ADC_Channel)
 {
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE); // 开启时钟外设
-    
+
     // 初始化GPIO口
 	GPIO_InitTypeDef GPIO_InitStructure;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN; // 模拟功能模式，禁用上下拉
@@ -13,12 +13,12 @@ static void ADC_init(uint16_t GPIO_Pin, uint8_t ADC_Channel)
 	GPIO_Init(GPIOA, &GPIO_InitStructure); // 时钟外设初始化
 
     // ADC
-    ADC_RegularChannelConfig(ADC1, ADC_Channel, 1, ADC_SampleTime_28Cycles5); 
+    ADC_RegularChannelConfig(ADC1, ADC_Channel, 1, ADC_SampleTime_28Cycles5);
         // ADC总转换时间为：采样时间+12.5个ADC周期 = 41
         // 12MHz进行41个周期才能转换完 (1/12M) * 41 = 3.4us （采样等待时间）
-    
+
     RCC_ADCCLKConfig(RCC_PCLK2_Div6); // 72MHz / 6 = 12MHz
-    
+
     ADC_InitTypeDef ADC_InitStruct;
     ADC_InitStruct.ADC_ContinuousConvMode = ENABLE; // 连续转换模式
     ADC_InitStruct.ADC_DataAlign = ADC_DataAlign_Right;
@@ -46,9 +46,7 @@ static void ADC_init(uint16_t GPIO_Pin, uint8_t ADC_Channel)
 
 static uint16_t get_ADC_value(void)
 {
-    //ADC_SoftwareStartConvCmd(ADC1, ENABLE);
-    //while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET); //等待3.4us
-    return ADC_GetConversionValue(ADC1);    
+    return ADC_GetConversionValue(ADC1);
 }
 
 // PA5 ADC12_IN5 光敏传感器AO口
@@ -59,12 +57,12 @@ void light_sensor_init(void)
 
 uint16_t get_light_sensor_value(void)
 {
-    return get_ADC_value();    
+    return get_ADC_value();
 }
 
 float get_light_sensor_voltage_value(void)
 {
-    return (float)ADC_GetConversionValue(ADC1) / 4095 * 3.3;    
+    return (float)ADC_GetConversionValue(ADC1) / 4095 * 3.3;
 }
 
 void show_light_sensor_voltage_value_OLED(uint8_t line, uint8_t column)

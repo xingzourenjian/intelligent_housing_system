@@ -32,7 +32,7 @@ static void PWM_init(void)
 	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; // 输出比较模式
 	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; // 输出比较极性
 	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-	TIM_OCInitStructure.TIM_Pulse = 0;//CCR
+	TIM_OCInitStructure.TIM_Pulse = 0; // CCR
 	TIM_OC3Init(TIM4, &TIM_OCInitStructure);
 	
 	TIM_Cmd(TIM4, ENABLE);

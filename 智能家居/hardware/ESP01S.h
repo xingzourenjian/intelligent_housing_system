@@ -8,8 +8,10 @@
 #include "serial.h"
 #include "delay.h"
 #include "buzzer.h"
+#include <string.h> // 定义了NULL
 
 #define UART3_MAX_RECV_LEN 1024
+#define UART3_MAX_SEND_LEN 1024
 
 void ESP01S_init(void);
 

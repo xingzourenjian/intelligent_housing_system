@@ -3,10 +3,14 @@
 
 #include "stm32f10x.h"
 
-void buzzer_GPIO_init(void); // 初始化蜂鸣器端口
+typedef enum
+{
+    BUZZER_OFF = 0, // 蜂鸣器关闭
+    BUZZER_ON, // 蜂鸣器打开
+}BUZZER_STATUS; // 蜂鸣器状态
 
-void buzzer_up(void);
+void buzzer_init(void); // 初始化蜂鸣器端口
 
-void buzzer_off(void);
+void buzzer_control(BUZZER_STATUS state); // 控制蜂鸣器状态
 
 #endif
