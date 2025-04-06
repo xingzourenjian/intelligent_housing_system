@@ -4,7 +4,6 @@
 #include "stm32f10x.h"
 #include <stdio.h>
 #include <stdarg.h>
-#include <string.h>
 #include "serial.h"
 #include "delay.h"
 #include "buzzer.h"

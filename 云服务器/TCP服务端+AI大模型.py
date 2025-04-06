@@ -160,22 +160,64 @@ def save_messages_to_history(new_message):
     except Exception as e:
         print(f"保存失败：{str(e)}")
 
-# """
-# 功能：
-#     处理客户端线程
-# 参数：
+"""
+功能：
+    处理客户端线程
+参数：
 
-# 返回值：
-# """
-# def handle_client(client_socket):
-#     try:
-#         while True:
-#             data = client_socket.recv(1024)
-#             if not data:
-#                 break
-#             client_socket.send(b"Server: " + data)
-#     finally:
-#         client_socket.close()
+返回值：
+"""
+def pthread_handle_client_connect(client_socket):
+    try:
+        # 5、使用recv()/send()方法接收/发送数据
+        response_messages = get_ai_response(client, messages, model, stream) # 获取 AI大模型 的回复
+        if not response_messages:
+            print("AI未返回有效响应")
+            response_messages = '{"code":21, "action":{}, "message":"服务异常，请重试"}'
+        print("本AI大人：", json.loads(response_messages))
+        response_message_temp = {"role": "assistant", "content": json.loads(response_messages).get('message', "")} # 封装格式
+        save_messages_to_history(json.dumps(response_message_temp)) # 保存AI消息到历史记录文件
+        ai_message = process_ai_response(response_messages) # 处理AI的回复
+        client_socket.send(ai_message.encode("utf-8")) # 给客户端打个招呼
+
+        client_ip, client_port = client_socket.getpeername()
+        while True:
+            try:
+                user_messages = client_socket.recv(1024) # 等待用户消息
+
+                if not user_messages:
+                    print(f"客户端 IP: {client_ip}, 端口: {client_port} 已断开连接！")
+                    break
+
+                print(f"用户 IP: {client_ip}, 端口: {client_port} 的消息：{user_messages.decode('utf-8')}")
+                user_message_temp = {"role": "user", "content": user_messages.decode('utf-8')}  # 封装格式
+                save_messages_to_history(json.dumps(user_message_temp)) # 保存用户消息到历史记录文件
+
+                messages.append({"role": "user", "content": user_messages.decode("utf-8")}) # 添加用户的消息到历史对话记录
+                response_messages = get_ai_response(client, messages, model, stream) # 获取 AI大模型 的回复
+                if not response_messages:
+                    print("AI未返回有效响应")
+                    response_messages = '{"code":21, "action":{}, "message":"服务异常，请重试"}'
+                try:
+                    print("本AI大人：", json.loads(response_messages))
+                    response_message_temp = {"role": "assistant", "content": json.loads(response_messages).get('message', "")} # 封装格式
+                    save_messages_to_history(json.dumps(response_message_temp)) # 保存AI消息到历史记录文件
+                    ai_message = process_ai_response(response_messages) # 处理AI的回复
+                    client_socket.send(ai_message.encode("utf-8")) # 发给客户端
+                except json.JSONDecodeError:
+                    print("AI返回了无效的JSON:", response_messages)
+                    response_messages = '{"code":21, "action":{}, "message":"服务异常，请重试"}'
+
+                temp_messages = user_messages.decode("utf-8").lower()
+                exit_keywords = ["再见", "回聊", "拜", "bye", "退出", "quit", "exit"]
+                if any(keyword in temp_messages for keyword in exit_keywords):
+                    break
+            except ConnectionResetError:
+                print(f"客户端 IP: {client_ip}, 端口: {client_port} 异常断开！")
+                break
+    finally:
+        # 6、使用close()关闭套接字
+        client_socket.close()
 
 
 
@@ -239,69 +281,32 @@ stream = False # True：流式输出 默认是False：非流式输出
 client = OpenAI(api_key = api_key, base_url = base_url)
 
 if __name__ == '__main__':
-    # 1、使用socket类创建套接字对象
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        # 1、使用socket类创建套接字对象
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # 允许端口复用
+        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # 允许端口复用
 
-    # 2、使用bind((ip, port))方法绑定IP地址和端口号
-    ip = "172.24.145.220"
-    port = 8086
-    server_socket.bind((ip, port))
+        # 2、使用bind((ip, port))方法绑定IP地址和端口号
+        ip = "172.24.145.220"
+        port = 8086
+        server_socket.bind((ip, port))
 
-    # 3、使用listen()方法监听套接字
-    server_socket.listen(5)
-    print("服务器已启动！")
-    print("我的端口号：", port)
-    print("Wait for connection......")
+        # 3、使用listen()方法监听套接字
+        server_socket.listen(5)
+        print("服务器已启动！")
+        print("我的端口号：", port)
+        print("Wait for connection......")
 
-    # 4、使用accept()方法等待客户端的连接，其结果是元组类型
-    client_socket, client_address = server_socket.accept()
-    print(f"连接客户端 IP: {client_address[0]}, 端口: {client_address[1]} 成功！")
+        while True:
+            # 4、使用accept()方法等待客户端的连接，其结果是元组类型
+            client_socket, client_address = server_socket.accept()
+            print(f"连接客户端 IP: {client_address[0]}, 端口: {client_address[1]} 成功！")
+            # 为每个客户端分配一个线程
+            client_thread = threading.Thread(target=pthread_handle_client_connect, args=(client_socket,))
+            client_thread.start()
+    finally:
+        # 6、使用close()关闭套接字
+        server_socket.close()
 
-    # 5、使用recv()/send()方法接收/发送数据
-    response_messages = get_ai_response(client, messages, model, stream) # 获取 AI大模型 的回复
-    print("本AI大人：", json.loads(response_messages))
-    response_message_temp = {"role": "assistant", "content": json.loads(response_messages).get('message', "")} # 封装格式
-    save_messages_to_history(json.dumps(response_message_temp)) # 保存AI消息到历史记录文件
-    ai_message = process_ai_response(response_messages) # 处理AI的回复
-    client_socket.send(ai_message.encode("utf-8")) # 给客户端打个招呼
 
-    client_ip, client_port = client_socket.getpeername()
-    while True:
-        try:
-            user_messages = client_socket.recv(1024) # 等待用户消息
-
-            if not user_messages:
-                user_message_temp = {"role": "user", "content": "又见面啦"}  # 为下次AI给我们打招呼做准备
-                save_messages_to_history(json.dumps(user_message_temp))
-                print(f"客户端 IP: {client_ip}, 端口: {client_port} 已断开连接！")
-                break
-
-            print(f"用户 IP: {client_ip}, 端口: {client_port} 的消息：{user_messages.decode('utf-8')}")
-            user_message_temp = {"role": "user", "content": user_messages.decode('utf-8')}  # 封装格式
-            save_messages_to_history(json.dumps(user_message_temp)) # 保存用户消息到历史记录文件
-
-            messages.append({"role": "user", "content": user_messages.decode("utf-8")}) # 添加用户的消息到历史对话记录
-            response_messages = get_ai_response(client, messages, model, stream) # 获取 AI大模型 的回复
-            print("本AI大人：", json.loads(response_messages))
-            response_message_temp = {"role": "assistant", "content": json.loads(response_messages).get('message', "")} # 封装格式
-            save_messages_to_history(json.dumps(response_message_temp)) # 保存AI消息到历史记录文件
-            ai_message = process_ai_response(response_messages) # 处理AI的回复
-            client_socket.send(ai_message.encode("utf-8")) # 发给客户端
-
-            temp_messages = user_messages.decode("utf-8").lower()
-            exit_keywords = ["再见", "回聊", "拜", "bye", "退出", "quit", "exit"]
-            if any(keyword in temp_messages for keyword in exit_keywords):
-                user_message_temp = {"role": "user", "content": "又见面啦"}
-                save_messages_to_history(json.dumps(user_message_temp))
-                break
-        except ConnectionResetError:
-            user_message_temp = {"role": "user", "content": "又见面啦"}
-            save_messages_to_history(json.dumps(user_message_temp))
-            print(f"客户端 IP: {client_ip}, 端口: {client_port} 异常断开！")
-            break
-
-    # 6、使用close()关闭套接字
-    client_socket.close()
-    server_socket.close()

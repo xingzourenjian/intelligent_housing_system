@@ -224,13 +224,13 @@ void ESP01S_init(void)
             break;
         }
         
-        serial_send_string("我: ");
+        serial_send_string("我:\r");
         serial_send_string(temp_p);
         serial_send_string("\r\n");
         
         printf("%s\r\n", UART3_tx_packet);
         
-        serial_send_string("AI: ");
+        serial_send_string("AI:\r");
         print_ESP01S_send_message(1);
     }
     delay_ms(1000);
