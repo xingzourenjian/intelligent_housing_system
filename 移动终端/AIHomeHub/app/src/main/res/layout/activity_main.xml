@@ -1,0 +1,389 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 根布局：约束布局，充满整个屏幕 -->
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp"
+    android:background="@color/background"> <!-- 设置整体背景颜色 -->
+
+    <!-- 标题文本 -->
+    <!-- wrap_content 宽度根据内容自适应 -->
+    <!-- 文字大小24sp -->
+    <!-- @color/primary 使用主题主色 -->
+    <!-- bold 粗体显示 -->
+    <TextView
+        android:id="@+id/tv_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="AI-HomeHub"
+        android:textSize="24sp"
+        android:textColor="@color/primary"
+        android:textStyle="bold"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/> <!-- 顶部居中显示 -->
+
+    <!-- 传感器数据卡片容器 -->
+    <!-- 0dp 宽度占满父布局 -->
+    <!-- 16dp 与标题的间距 -->
+    <!-- 12dp 卡片圆角半径 -->
+    <!-- 2dp 卡片阴影高度 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/card_sensors"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="2dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_title"> <!-- 位于标题下方 -->
+
+        <!-- 垂直排列的线性布局 -->
+        <!-- vertical 子元素垂直排列 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="8dp"> <!-- 内边距 -->
+
+            <!-- 温度传感器子卡片 -->
+            <!-- 4dp 卡片之间的间距 -->
+            <!-- 8dp 子卡片圆角 -->
+            <!-- 1dp 子卡片阴影 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="1dp">
+
+                <!-- 水平排列的传感器条目 -->
+                <!-- 16dp 内边距 -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:background="@drawable/bg_sensor_item"> <!-- 背景形状 -->
+
+                    <!-- 温度图标 -->
+                    <!-- 32dp 固定宽度 -->
+                    <ImageView
+                        android:id="@+id/icon_temperature"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_temp"
+                        android:contentDescription="温度图标"/> <!-- 无障碍描述 -->
+
+                    <!-- 温度数值显示 -->
+                    <!-- 0dp 权重布局 -->
+                    <!-- 16dp 左侧间距 -->
+                    <!-- 1 剩余空间权重 -->
+                    <!-- 16sp 文字大小 -->
+                    <TextView
+                        android:id="@+id/tv_temperature"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:text="温度：--℃"
+                        android:textSize="16sp"
+                        android:textColor="@color/text_primary"/> <!-- 文字颜色 -->
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 湿度传感器卡片 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:background="@drawable/bg_sensor_item">
+
+                    <ImageView
+                        android:id="@+id/icon_humidity"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_humidity"
+                        android:contentDescription="湿度图标"/>
+
+                    <TextView
+                        android:id="@+id/tv_humidity"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:text="湿度：--%"
+                        android:textSize="16sp"
+                        android:textColor="@color/text_primary"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 烟雾传感器卡片 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:background="@drawable/bg_sensor_item">
+
+                    <ImageView
+                        android:id="@+id/icon_smoke"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_smoke"
+                        android:contentDescription="烟雾图标"/>
+
+                    <TextView
+                        android:id="@+id/tv_smoke"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:text="烟雾：--ppm"
+                        android:textSize="16sp"
+                        android:textColor="@color/text_primary"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 光照传感器卡片 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:background="@drawable/bg_sensor_item">
+
+                    <ImageView
+                        android:id="@+id/icon_light"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_light"
+                        android:contentDescription="光照图标"/>
+
+                    <TextView
+                        android:id="@+id/tv_light"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:text="光照：--Lux"
+                        android:textSize="16sp"
+                        android:textColor="@color/text_primary"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 一氧化碳传感器卡片 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:background="@drawable/bg_sensor_item">
+
+                    <ImageView
+                        android:id="@+id/icon_co"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_co"
+                        android:contentDescription="一氧化碳图标"/>
+
+                    <TextView
+                        android:id="@+id/tv_co"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:text="一氧化碳：--ppm"
+                        android:textSize="16sp"
+                        android:textColor="@color/text_primary"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- 输入区域 -->
+    <!-- 0dp 宽度占满父布局 -->
+    <!-- 16dp 上方间距 -->
+    <LinearLayout
+        android:id="@+id/ll_input"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/card_sensors"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"> <!-- 水平排列 -->
+
+        <!-- 文本输入框 -->
+        <!-- 0dp 权重布局 -->
+        <!-- 48dp 固定高度 -->
+        <!-- 1 占满剩余空间 -->
+        <!-- @drawable/bg_edittext 自定义背景 -->
+        <!-- 16dp 水平内边距 -->
+        <EditText
+            android:id="@+id/et_input"
+            android:layout_width="0dp"
+            android:layout_height="48dp"
+            android:layout_weight="1"
+            android:background="@drawable/bg_edittext"
+            android:hint="输入指令"
+            android:paddingHorizontal="16dp"
+            android:textColor="@color/text_primary"/> <!-- 文字颜色 -->
+    </LinearLayout>
+
+    <!-- 按钮容器 -->
+    <!-- wrap_content 宽度根据内容自适应 -->
+    <!-- 16dp 上方间距 -->
+    <!-- horizontal 水平排列 -->
+    <!-- center_vertical 垂直居中 -->
+    <LinearLayout
+        android:id="@+id/button_group"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/ll_input">
+
+        <!-- 展开/收起按钮 -->
+        <!-- 48dp 固定尺寸 -->
+        <!-- @drawable/ic_expand 图标资源 -->
+        <!-- @drawable/bg_button_primary 按钮背景 -->
+        <ImageButton
+            android:id="@+id/btn_toggle_sensors"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_expand"
+            android:background="@drawable/bg_button_primary"
+            android:contentDescription="展开/收起传感器"
+            android:onClick="onToggleSensorsClick"/> <!-- 点击事件 -->
+
+        <!-- 连接按钮组 -->
+        <!-- 8dp 左侧间距 -->
+        <LinearLayout
+            android:id="@+id/btn_connect_group"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:orientation="horizontal">
+
+            <!-- 连接按钮 -->
+            <ImageButton
+                android:id="@+id/btn_connect"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_connect"
+                android:background="@drawable/bg_button_primary"
+                android:contentDescription="连接服务器"
+                android:onClick="onConnectClick"/>
+
+            <!-- 断开连接按钮（默认隐藏） -->
+            <ImageButton
+                android:id="@+id/btn_disconnect"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_disconnect"
+                android:background="@drawable/bg_button_secondary"
+                android:contentDescription="断开连接"
+                android:onClick="onDisconnectClick"
+                android:visibility="gone"/> <!-- 初始不可见 -->
+        </LinearLayout>
+
+        <!-- 清空按钮 -->
+        <ImageButton
+            android:id="@+id/btn_clear"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_clear"
+            android:background="@drawable/bg_button_clear"
+            android:contentDescription="清空消息"
+            android:onClick="onClearClick"/>
+
+        <!-- 发送按钮 -->
+        <ImageButton
+            android:id="@+id/btn_send"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_send"
+            android:background="@drawable/bg_button_accent"
+            android:contentDescription="发送消息"
+            android:onClick="onSendClick"/>
+    </LinearLayout>
+
+    <!-- 消息显示区域 -->
+    <!-- 0dp 宽度占满父布局 -->
+    <!-- 0dp 高度占满剩余空间 -->
+    <!-- 16dp 上方间距 -->
+    <!-- 8dp 圆角半径 -->
+    <!-- 4dp 阴影高度 -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/card_messages"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/button_group"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="16dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp">
+
+        <!-- 嵌套滚动容器 -->
+        <!-- 16dp 内边距 -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <androidx.core.widget.NestedScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:padding="16dp">
+                <!-- 消息显示文本 -->
+                <!-- @color/text_secondary 文字颜色 -->
+                <!-- 14sp 文字大小 -->
+                <TextView
+                    android:id="@+id/tv_messages"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="14sp"/>
+            </androidx.core.widget.NestedScrollView>
+        </RelativeLayout>
+    </androidx.cardview.widget.CardView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

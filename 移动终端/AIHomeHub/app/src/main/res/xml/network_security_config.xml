@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ==================== 网络安全配置 ==================== -->
+<!-- 文件作用：控制应用的网络安全性策略 -->
+<!-- 适用场景：API 24+ (Android 7.0+) -->
+<network-security-config>
+
+    <!-- ==================== 基础配置 ==================== -->
+    <!-- cleartextTrafficPermitted: 允许非加密HTTP通信 -->
+    <!-- 警告：生产环境应设为 false -->
+    <base-config cleartextTrafficPermitted="true">
+
+        <!-- ==================== 信任锚点配置 ==================== -->
+        <!-- 定义服务器证书验证的信任源 -->
+        <trust-anchors>
+            <!-- 信任系统预装CA证书 -->
+            <!-- 适用于验证公共CA签发的证书 -->
+            <certificates src="system"/>
+
+            <!-- 信任用户安装的CA证书 -->
+            <!-- 注意：可能带来中间人攻击风险 -->
+            <!-- 典型应用场景：调试自签名证书 -->
+            <certificates src="user"/>
+        </trust-anchors>
+    </base-config>
+</network-security-config>

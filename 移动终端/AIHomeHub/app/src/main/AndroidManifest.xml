@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 根 manifest 标签，定义应用程序包名和命名空间 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.ai_homehub"> <!-- 应用程序的包名（唯一标识） -->
+
+    <!-- 权限声明区域 -->
+    <uses-permission android:name="android.permission.INTERNET"/> <!-- 允许应用程序访问互联网 -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/> <!-- 允许检测网络状态 -->
+
+    <!-- 应用程序全局配置 -->
+    <!-- true 允许系统备份应用数据 -->
+    <!-- @mipmap/ic_launcher 应用图标资源路径 -->
+    <!-- AI-Hub 应用显示名称 -->
+    <!-- @xml/network_security_config 自定义网络安全配置文件 -->
+    <!-- true 允许明文HTTP通信（生产环境建议关闭） -->
+    <!-- @style/AppTheme 应用主题样式 -->
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="AI-Hub"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:usesCleartextTraffic="true"
+        android:theme="@style/AppTheme">
+
+        <!-- 主入口 Activity 配置 -->
+        <!-- MainActivity Activity 类名（相对于包名的路径） -->
+        <!-- true 允许其他应用启动此 Activity -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <!-- 意图过滤器定义启动器行为 -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/> <!-- 标记为应用程序入口点 -->
+                <category android:name="android.intent.category.LAUNCHER"/> <!-- 显示在启动器中 -->
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ==================== 主品牌色 ==================== -->
+    <!-- Material Design 标准色规范 -->
+    <color name="colorPrimary">#3F51B5</color>       <!-- 主品牌色 (Indigo 500) -->
+    <color name="colorPrimaryDark">#303F9F</color>   <!-- 深色主品牌色 (Indigo 700) -->
+    <color name="colorAccent">#FF4081</color>        <!-- 强调色 (Pink A200) -->
+
+    <!-- ==================== 文本色系 ==================== -->
+    <color name="text_primary">#212121</color>       <!-- 主要文本颜色 (Black 87%) -->
+    <color name="text_secondary">#757575</color>     <!-- 次要文本颜色 (Black 60%) -->
+
+    <!-- ==================== 通用颜色 ==================== -->
+    <color name="primary">@color/colorPrimary</color>  <!-- 主色别名，用于代码引用 -->
+    <color name="white">#FFFFFF</color>                <!-- 纯白色 -->
+    <color name="background">#F5F7FA</color>          <!-- 页面背景色 (浅灰蓝) -->
+
+    <!-- ==================== 组件专用色 ==================== -->
+    <color name="accent">#FF4081</color>              <!-- 强调色别名 (与colorAccent重复，建议统一使用一个) -->
+    <color name="divider">#E0E0E0</color>             <!-- 分割线颜色 (Gray 300) -->
+    <color name="button_secondary">#9E9E9E</color>    <!-- 次级按钮颜色 (Gray 500) -->
+    <color name="card_background">#FFFFFF</color>     <!-- 卡片控件背景色 -->
+</resources>
