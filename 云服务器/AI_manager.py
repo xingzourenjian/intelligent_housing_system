@@ -206,7 +206,7 @@ class AI_manager:
     返回值：
         已删除的文件数
     """
-    def clean_old_histories(days=30):
+    def clean_old_histories(self, days=30):
         delete_count = 0
 
         for filename in os.listdir(): # 遍历当前目录下的所有文件和文件夹
@@ -228,6 +228,37 @@ class AI_manager:
                         delete_count += 1
                     except Exception as e:
                         print(f"Error deleting {filename}: {str(e)}")
+
+            except Exception as e:
+                print(f"Error processing {filename}: {str(e)}")
+
+        return delete_count
+
+    """
+    功能：
+        清除所有历史对话记录文件
+    参数：
+        void
+    返回值：
+        已删除的文件数
+    """
+    def clean_all_histories(self):
+        delete_count = 0
+
+        for filename in os.listdir(): # 遍历当前目录下的所有文件和文件夹
+            try:
+                # 添加文件类型校验
+                if not (filename.startswith("history_")
+                    and filename.endswith(".json")
+                    and os.path.isfile(filename)):
+                    continue
+
+                try:
+                    os.remove(filename)
+                    print(f"deleted file: {filename}")  # 简单日志
+                    delete_count += 1
+                except Exception as e:
+                    print(f"Error deleting {filename}: {str(e)}")
 
             except Exception as e:
                 print(f"Error processing {filename}: {str(e)}")

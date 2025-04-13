@@ -1,3 +1,10 @@
-Load "d:\\work\\Keil_v5\\projects\\智能家居\\Objects\\project.axf" 
-Full Chip Erase Done.Programming Done.Verify OK.Application running ...
-Flash Load finished at 18:56:35
+*** Using Compiler 'V5.06 update 7 (build 960)', folder: 'D:\work\Keil_v5\Arm\ARMCC\Bin'
+Build target '智能家居'
+linking...
+.\Objects\project.axf: Error: L6218E: Undefined symbol send_cmd_to_blue (referred from esp01s.o).
+Not enough information to list image symbols.
+Not enough information to list load addresses in the image map.
+Finished: 2 information, 0 warning and 1 error messages.
+".\Objects\project.axf" - 1 Error(s), 0 Warning(s).
+Target not created.
+Build Time Elapsed:  00:00:00

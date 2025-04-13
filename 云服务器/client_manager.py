@@ -130,7 +130,7 @@ class client_manager:
             return
 
         try:
-            # 构造原始消息字符串
+            # 构造原始消息字符串，例："action = 0; message = 你好\r\n"
             action_str = ", ".join(f"{device}:{cmd}" for device,cmd in send_message['action'].items())
             original_message = f"action = {action_str if action_str else '0'}; message = {send_message['message']}\r\n" # 给ESP01S的消息
 
@@ -143,8 +143,16 @@ class client_manager:
                 if self.get_client_device_type(client_socket) == self.client_device_type_list[0]:
                     if send_message['code'] == MESSAGE_TYPE.SENSOR.value: # 传感器消息
                         client_socket.send(filtered_message1.encode('utf-8'))
-                    elif send_message['code'] in {MESSAGE_TYPE.NORMAL.value, MESSAGE_TYPE.DEVICE.value}: # 仅聊天 或 设备操作和聊天
+                    elif send_message['code'] == MESSAGE_TYPE.NORMAL.value: # 仅聊天
                         client_socket.send(filtered_message2.encode('utf-8'))
+                    elif send_message['code'] == MESSAGE_TYPE.DEVICE.value: # 设备操作和聊天
+                        # 发给自己
+                        client_socket.send(filtered_message2.encode('utf-8'))
+                        # 发给ESP01S
+                        for client_socket_i in self.clients: # 遍历键
+                            if self.get_client_device_type(client_socket_i) == self.client_device_type_list[1]: # 是ESP01S客户端套接字
+                                client_socket_i.send(original_message.encode('utf-8'))
+                                break
                 # ESP01S客户端套接字调用该函数
                 elif self.get_client_device_type(client_socket) == self.client_device_type_list[1]:
                     client_socket.send(original_message.encode('utf-8'))

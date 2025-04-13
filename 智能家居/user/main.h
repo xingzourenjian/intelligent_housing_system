@@ -11,7 +11,8 @@
 #include "ESP01S.h"
 #include "led.h"
 #include "bluetooth.h"
-
+#include "device_white_list.h"
+#include "TH_sensor.h"
 
 
 #endif

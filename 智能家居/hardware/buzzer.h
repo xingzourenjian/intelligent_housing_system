@@ -13,4 +13,8 @@ void buzzer_init(void); // 初始化蜂鸣器端口
 
 void buzzer_control(BUZZER_STATUS state); // 控制蜂鸣器状态
 
+void buzzer_up(void); // 打开蜂鸣器
+
+void buzzer_off(void); // 关闭蜂鸣器
+
 #endif

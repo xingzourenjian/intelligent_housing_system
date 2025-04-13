@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "stm32f10x.h": "c",
-        "system_error": "c"
+        "system_error": "c",
+        "algorithm": "c",
+        "format": "c"
     }
 }

@@ -12,7 +12,9 @@
 
 void blue_init(void);
 
-void send_cmd_to_blue(char *str);
+void send_message_to_blue_string(char *str);
+
+void send_message_to_blue_num(uint32_t number);
 
 char *get_blue_message(void);
 

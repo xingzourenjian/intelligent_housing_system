@@ -139,9 +139,14 @@ void blue_init(void)
 	UART2_init();
 }
 
-void send_cmd_to_blue(char *str)
+void send_message_to_blue_string(char *str)
 {
     UART2_send_string(str);
+}
+
+void send_message_to_blue_num(uint32_t number)
+{
+	UART2_send_number(number);
 }
 
 char *get_blue_message(void)
@@ -154,5 +159,5 @@ void print_blue_send_message(void)
     char *p_str = NULL;
 
     p_str = get_blue_message();
-    serial_send_string(p_str);       
+    serial_send_string(p_str); // 发送到串口调试助手
 }

@@ -10,7 +10,7 @@ static void PWM_init(void)
 {
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
-	
+
 	GPIO_InitTypeDef GPIO_InitStructure;
  	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
@@ -24,7 +24,7 @@ static void PWM_init(void)
 	TIM_TimeBaseInitStructure.TIM_Period = 20000 - 1;    // ARR，范围0~65535
 	TIM_TimeBaseInitStructure.TIM_Prescaler = 72 - 1;  // PSC
 	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0; // 重复计数器
-	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseInitStructure); 
+	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseInitStructure);
 
 	// 输出比较通道
 	TIM_OCInitTypeDef TIM_OCInitStructure;
@@ -34,7 +34,7 @@ static void PWM_init(void)
 	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
 	TIM_OCInitStructure.TIM_Pulse = 0; // CCR
 	TIM_OC3Init(TIM4, &TIM_OCInitStructure);
-	
+
 	TIM_Cmd(TIM4, ENABLE);
 }
 
@@ -54,4 +54,14 @@ void servo_init(void)
 void servo_set_angle(float angle)
 {
     PWM_set_compare3(angle / 180 * 2000 + 500);
+}
+
+void servo_window_up(void)
+{
+	servo_set_angle(180); // 打开窗户
+}
+
+void servo_window_off(void)
+{
+	servo_set_angle(0); // 关闭窗户
 }

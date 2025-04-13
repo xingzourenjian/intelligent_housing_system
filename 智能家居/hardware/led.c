@@ -88,3 +88,13 @@ void led_control(LED_STATUS state)
 		GPIO_ResetBits(GPIOC, GPIO_Pin_13);
 	}
 }
+
+void led_up(void)
+{
+	led_control(LED_ON); // 打开LED灯
+}
+
+void led_down(void)
+{
+	led_control(LED_OFF); // 关闭LED灯
+}

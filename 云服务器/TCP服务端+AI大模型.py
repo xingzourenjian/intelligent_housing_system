@@ -3,6 +3,7 @@ import socket
 import threading
 import json
 import os
+import time
 from enum import Enum
 # 自己封装的包
 import AI_manager
@@ -23,7 +24,6 @@ device_white_list = {
     '关灯':'led_down',
     '开空调':'ac_on',
     '关空调':'ac_off',
-    '调节风速':'fan_speed',
     '打开报警器':'buzzer_up',
     '关闭报警器':'buzzer_off',
     '开窗':'window_up',
@@ -114,21 +114,26 @@ def pthread_handle_client_connect(client_socket, client_mgr, AI_mgr):
         client_socket.send("请告诉我你的设备 id (数字)\r\n".encode('utf-8'))
         while True:
             # 获取客户端设备id
-            device_id = client_socket.recv(1024)
+            user_message = client_socket.recv(1024)
+
             try:
-                if not isinstance(int(device_id.strip()), int): # id 不是数字
+                if not isinstance(int(user_message.decode('utf-8').strip()), int): # id 不是数字
                     continue
                 else:
                     break
             except Exception:
                 client_socket.send("输入错误，请重新告诉我你的设备 id (数字)\r\n".encode('utf-8'))
+                print("客户端错误的id：" + user_message.decode('utf-8').strip())
                 pass
 
-        # 更新客户端设备id
-        client_mgr.update_device_id(client_socket, int(device_id.strip()))
-
         # 生成唯一客户端标识
-        device_id = int(device_id.strip())
+        device_id = int(user_message.decode('utf-8').strip())
+
+        # 添加到客户端套接字列表
+        client_ip, client_port = client_socket.getpeername()
+        client_address = [client_ip, client_port]
+        client_mgr.add_client(client_socket, client_address, device_id, "PHONE")
+
         history_filename = f"history_{device_id}.json"  # 唯一历史文件名
 
         # 加载该客户端的历史记录
@@ -151,7 +156,6 @@ def pthread_handle_client_connect(client_socket, client_mgr, AI_mgr):
         except Exception:
             pass
 
-        client_ip, client_port = client_socket.getpeername()
         while True:
             try:
                 # 等待用户消息
@@ -166,10 +170,11 @@ def pthread_handle_client_connect(client_socket, client_mgr, AI_mgr):
 
                 # 如果是改变客户端设备类型的消息，{"device_type": "ESP01S"}，拦截并处理客户端消息
                 try:
-                    user_message_dict = json.loads(user_message.decode('utf-8'))
+                    user_message_dict = json.loads(user_message.decode('utf-8').strip())
                     if isinstance(user_message_dict, dict): # 用户消息是字典
                         client_mgr.update_client_dev_type(client_socket, user_message_dict.get("device_type", "PHONE"))
                         client_mgr.send_message_to_client(client_socket, client_mgr.make_send_message_package("设备类型更换成功！", MESSAGE_TYPE), MESSAGE_TYPE)
+                        print("设备类型更换成功！")
                         continue
                 except Exception:
                     pass
@@ -234,8 +239,7 @@ if __name__ == '__main__':
         client_mgr = client_manager.client_manager() # 客户端管理器实例
         AI_mgr = AI_manager.AI_manager(client, model, stream, device_white_list) # AI管理器实例
 
-        # print("AI提示词：") # 调试用
-        # print(ai_order)
+        AI_mgr.clean_all_histories() # 调试阶段，清空历史对话文件
 
         # 1、使用socket类创建套接字对象
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #AF_INET 用于网络之间的进程通信 SOCK_STREAM 表示用TCP协议编程
@@ -258,9 +262,6 @@ if __name__ == '__main__':
                 # 4、使用accept()方法等待客户端的连接，其结果是元组类型
                 client_socket, client_address = server_socket.accept()
                 print(f"连接客户端 IP: {client_address[0]}, 端口: {client_address[1]} 成功！")
-
-                # 添加到客户端套接字列表
-                client_mgr.add_client(client_socket, client_address, client_address[0], "PHONE") # 默认客户端设备 id 是ip
 
                 # 为每个客户端分配一个线程
                 threading.Thread(target=pthread_handle_client_connect, args=(client_socket, client_mgr, AI_mgr,)).start()

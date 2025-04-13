@@ -29,3 +29,13 @@ void buzzer_control(BUZZER_STATUS state)
 		GPIO_ResetBits(GPIOA, GPIO_Pin_8); // 默认关闭蜂鸣器
 	}
 }
+
+void buzzer_up(void)
+{
+	buzzer_control(BUZZER_ON); // 打开蜂鸣器
+}
+
+void buzzer_off(void)
+{
+	buzzer_control(BUZZER_OFF); // 关闭蜂鸣器
+}
