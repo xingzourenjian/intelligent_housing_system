@@ -2,26 +2,16 @@
 
 int main(int argc, const char *argv[])
 {
-    uint8_t data_buffer[5];
-
-    blue_init();
-    DHT_init();
-    buzzer_init();
-    ESP01S_init();
+    MQ2_sensor_init();
+    OLED_Init(); // OLED初始化
+    light_sensor_init();
 
     while(1)
     {
-        if(DHT_get_temp_humi_data(data_buffer) == 1)
-        {
-            send_message_to_blue_string("湿度: ");
-            send_message_to_blue_num(data_buffer[0]); // 湿度整数
-            send_message_to_blue_string(".");
-            send_message_to_blue_num(data_buffer[1]); // 湿度小数
-            send_message_to_blue_string("\r\n温度: ");
-            send_message_to_blue_num(data_buffer[2]); // 温度整数
-            send_message_to_blue_string(".");
-            send_message_to_blue_num(data_buffer[3]); // 温度小数
-        }
-        delay_ms(2000);
+        OLED_Clear();
+        show_MQ2_sensor_voltage_value_OLED(1, 1);
+        
+        show_light_sensor_voltage_value_OLED(2, 1);
+        delay_ms(1000); // 延时1秒
     }
 }

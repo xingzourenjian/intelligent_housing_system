@@ -13,6 +13,7 @@
 #include "bluetooth.h"
 #include "device_white_list.h"
 #include "TH_sensor.h"
+#include "MQ2.h"
 
 
 #endif

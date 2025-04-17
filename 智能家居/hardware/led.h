@@ -17,12 +17,15 @@ void led_breath_init(void);
 
 void led_breath(void);
 
+void led_PC13(void);
+
 void led_init(void);
 
 void led_control(LED_STATUS state);
 
-void led_up(void); // 打开LED灯
+void led_up(void);
 
 void led_down(void);
+
 
 #endif

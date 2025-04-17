@@ -3,10 +3,11 @@
 
 #include "stm32f10x.h"
 #include "OLED.h"
+#include "delay.h"
 
 void light_sensor_init(void);
 
-uint16_t get_light_sensor_value(void);
+float get_light_sensor_value(void);
 
 float get_light_sensor_voltage_value(void);
 
