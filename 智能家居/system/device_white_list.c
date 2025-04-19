@@ -7,8 +7,6 @@ device_cmd_node cmd_map_table[] =
     {"buzzer_off", buzzer_off},       // 关闭报警器
     {"window_up",  servo_window_up},  // 打开窗户
     {"window_off", servo_window_off}, // 关闭窗户
-    {"led_up",     led_up},           // 打开灯
-    {"led_down",   led_down},         // 关闭灯
 };
 
 int get_cmd_map_table_len(void)

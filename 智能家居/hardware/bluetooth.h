@@ -3,7 +3,6 @@
 
 #include "stm32f10x.h"
 #include <stdio.h>
-#include "serial.h"
 #include "delay.h"
 #include <string.h> // 定义了NULL
 
@@ -17,7 +16,5 @@ void send_message_to_blue_string(char *str);
 void send_message_to_blue_num(uint32_t number);
 
 char *get_blue_message(void);
-
-void print_blue_send_message(void);
 
 #endif

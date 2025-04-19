@@ -39,3 +39,31 @@ void buzzer_off(void)
 {
 	buzzer_control(BUZZER_OFF); // 关闭蜂鸣器
 }
+
+void buzzer_pre_warn(BUZZER_PRE_WARN pre_warn_select)
+{
+	if(pre_warn_select == BUZZER_PRE_WARN_1) // 一级预警
+	{
+		led_down(LED8);	 // 红灯熄灭
+		led_up(LED7); // 黄灯常亮
+		for(uint8_t i = 0; i < 3; i++)
+		{
+			buzzer_up(); // 蜂鸣器间歇报警
+			delay_ms(500);
+			buzzer_off();
+			delay_ms(500);
+		}
+	}
+	else if(pre_warn_select == BUZZER_PRE_WARN_2) // 二级预警
+	{
+		led_down(LED7);	 // 黄灯熄灭
+		led_up(LED8); // 红灯常亮
+		buzzer_up(); // 蜂鸣器持续报警
+	}
+	else if(pre_warn_select == BUZZER_PRE_WARN_OFF) // 预警解除
+	{
+		led_down(LED7);	 // 黄灯熄灭
+		led_down(LED8);	 // 红灯熄灭
+		buzzer_off();	 // 蜂鸣器关闭
+	}
+}

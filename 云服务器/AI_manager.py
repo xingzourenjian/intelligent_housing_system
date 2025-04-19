@@ -3,9 +3,12 @@ import threading
 import json
 import os
 import time
+# 自己封装的包
+from client_manager import MESSAGE_TYPE
 
 class AI_manager:
-    def __init__(self, client, model, stream, device_white_list):
+    def __init__(self, client, model, stream, device_white_list: dict) -> None:
+        # 实例属性
         self.client = client
         self.model = model
         self.stream = stream
@@ -17,11 +20,12 @@ class AI_manager:
     功能：
         将AI初始化消息 初始化为 默认对话记录
     参数：
-        void
+        ai_order: AI提示词，字符串
     返回值：
         AI初始化消息，字典型列表
     """
-    def init_message(self, ai_order):
+    def init_message(self, ai_order: str) -> list:
+        # 实例方法
         return [
             {"role": "system", "content": ai_order},
             {"role": "user", "content": "你好呀！"},
@@ -33,12 +37,11 @@ class AI_manager:
         获取 AI大模型 回复
     参数：
         message：AI初始化消息，字典型列表
-        MESSAGE_TYPE：消息类型，枚举体
     返回值：
         成功：AI回复的消息，字典型的JSON字符串
         失败：{"code": 21, "action": {}, "message": "AI服务暂时不可用"}，字典型的JSON字符串
     """
-    def get_response(self, message, MESSAGE_TYPE):
+    def get_response(self, message: list) -> str:
         try:
             response_message = "" # 用于保存回复的消息，字典型的JSON字符串
 
@@ -73,7 +76,7 @@ class AI_manager:
         成功：过滤后的安全指令，字典
         失败：{}
     """
-    def validate_device_actions(self, action):
+    def validate_device_actions(self, action: dict) -> dict:
         safe_action = {}
 
         # 验证字典格式
@@ -95,12 +98,11 @@ class AI_manager:
         处理AI回复的消息，过滤设备指令和封装消息格式
     参数：
         response_message: AI回复的消息，字典型的JSON字符串
-        MESSAGE_TYPE：消息类型，枚举体
     返回值：
         成功：处理后的消息，字典
         失败：{"code": 21, "action": {}, "message": "AI服务暂不可用"}，字典
     """
-    def handle_response(self, response_message, MESSAGE_TYPE):
+    def handle_response(self, response_message: str) -> dict:
         try:
             # 解析AI回复的消息
             response_message_str = json.loads(response_message)  # 解析JSON，字典
@@ -115,13 +117,13 @@ class AI_manager:
             message = response_message_str.get('message', '') # 提取message字段
 
             # 返回处理后的消息
-            if action: # 有设备要操作
+            if action: # 设备操作和对话
                 return {
                     "code": MESSAGE_TYPE.DEVICE.value,
                     "action": action,
                     "message": message
                 }
-            else:
+            else: # 仅对话
                 return {"code": MESSAGE_TYPE.NORMAL.value, "action": {}, "message": message}
         except Exception as e:
             print(f"handle_response : {str(e)}")
@@ -136,7 +138,7 @@ class AI_manager:
     返回值：
         AI初始化消息，字典型列表
     """
-    def load_history_message(self, ai_order, filename):
+    def load_history_message(self, ai_order: str, filename: str) -> list:
         with self.history_file_lock: # 加锁，防止多线程同时读写文件导致数据损坏
             try:
                 # 打开历史记录文件
@@ -167,7 +169,7 @@ class AI_manager:
     返回值：
         void
     """
-    def save_message_to_history(self, new_message, filename):
+    def save_message_to_history(self, new_message: str, filename: str) -> None:
         try:
             message_dict = json.loads(new_message) # 解析json字符串
 
@@ -206,7 +208,7 @@ class AI_manager:
     返回值：
         已删除的文件数
     """
-    def clean_old_histories(self, days=30):
+    def clean_old_histories(self, days: int = 30) -> int:
         delete_count = 0
 
         for filename in os.listdir(): # 遍历当前目录下的所有文件和文件夹
@@ -242,7 +244,7 @@ class AI_manager:
     返回值：
         已删除的文件数
     """
-    def clean_all_histories(self):
+    def clean_all_histories(self) -> int:
         delete_count = 0
 
         for filename in os.listdir(): # 遍历当前目录下的所有文件和文件夹

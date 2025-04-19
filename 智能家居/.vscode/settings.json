@@ -3,6 +3,7 @@
         "stm32f10x.h": "c",
         "system_error": "c",
         "algorithm": "c",
-        "format": "c"
+        "format": "c",
+        "mq2.h": "c"
     }
 }

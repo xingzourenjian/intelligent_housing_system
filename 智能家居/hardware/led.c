@@ -8,15 +8,15 @@ PWM分辨率：1 / (ARR+1)
 */
 static void PWM_init(void)
 {
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);//打开通用定时器
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE); // 打开通用定时器
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
 	GPIO_InitTypeDef GPIO_InitStructure;
  	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_3;
+	GPIO_InitStructure.GPIO_Pin = LED9; // PB3
  	GPIO_Init(GPIOB, &GPIO_InitStructure);
-    
+
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE); // 重映射，占据J-link调试端口
     GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
     GPIO_PinRemapConfig(GPIO_PartialRemap1_TIM2, ENABLE);
@@ -47,12 +47,13 @@ static void PWM_set_compare2(uint16_t compare)
 	TIM_SetCompare2(TIM2, compare);
 }
 
-void led_breath_init(void)
+// PB3 LED9
+void led9_breath_init(void)
 {
     PWM_init();
 }
 
-void led_breath(void)
+void led9_breath(void)
 {
     int i = 0;
     for(i = 0; i<=LED_ARR; i++)
@@ -67,7 +68,8 @@ void led_breath(void)
     }
 }
 
-void led_PC13(void)
+// PC13 系统运行成功指示灯
+void led_system(void)
 {
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
 
@@ -80,37 +82,55 @@ void led_PC13(void)
     GPIO_ResetBits(GPIOC, GPIO_Pin_13); // 系统运行成功指示灯
 }
 
+// PA11 PA12 PA15   LED6 LED7 LED8
 void led_init(void)
 {
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
 
 	GPIO_InitTypeDef GPIO_InitStructure;
  	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
- 	GPIO_Init(GPIOC, &GPIO_InitStructure);
+	GPIO_InitStructure.GPIO_Pin = LED6 | LED7 | LED8; // PA11 PA12 PA15
+ 	GPIO_Init(GPIOA, &GPIO_InitStructure);
+    
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE); // 重映射，占据J-link调试端口
+    GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
 
-    GPIO_ResetBits(GPIOC, GPIO_Pin_13);
+    GPIO_ResetBits(GPIOA, LED6); // 关闭LED灯
+	GPIO_ResetBits(GPIOA, LED7);
+	GPIO_ResetBits(GPIOA, LED8);
 }
 
-void led_control(LED_STATUS state)
+void led_control(uint16_t LED_num, LED_STATUS state)
 {
 	if(state == LED_ON)
 	{
-		GPIO_ResetBits(GPIOC, GPIO_Pin_13);
+		GPIO_ResetBits(GPIOA, LED_num); // 打开LED灯
 	}
 	else if(state == LED_OFF)
 	{
-		
+		GPIO_SetBits(GPIOA, LED_num); // 关闭LED灯
 	}
 }
 
-void led_up(void)
+void led_up(uint16_t LED_num)
 {
-	led_control(LED_ON); // 打开LED灯
+	led_control(LED_num, LED_ON); // 打开LED灯
 }
 
-void led_down(void)
+void led_down(uint16_t LED_num)
 {
-	led_control(LED_OFF); // 关闭LED灯
+	led_control(LED_num, LED_OFF); // 关闭LED灯
+}
+
+void led_flip(uint16_t LED_num)
+{
+    if(GPIO_ReadInputDataBit(GPIOA, LED_num) == 0)
+	{
+		GPIO_SetBits(GPIOA, LED_num); // 关闭LED灯
+	}
+	else
+	{
+		GPIO_ResetBits(GPIOA, LED_num); // 打开LED灯
+	}
 }

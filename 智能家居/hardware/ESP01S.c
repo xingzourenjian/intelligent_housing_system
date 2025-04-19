@@ -239,6 +239,8 @@ uint8_t send_cmd_to_ESP01S(char *cmd, uint32_t ms)
         ret_flag = 0;
     else
         ret_flag = 0;
+    
+    // return ret_flag;
 }
 
 char *get_ESP01S_message(void)

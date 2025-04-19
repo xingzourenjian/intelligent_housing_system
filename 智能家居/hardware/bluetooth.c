@@ -153,11 +153,3 @@ char *get_blue_message(void)
 {
     return get_UART2_rx_packet();
 }
-
-void print_blue_send_message(void)
-{
-    char *p_str = NULL;
-
-    p_str = get_blue_message();
-    serial_send_string(p_str); // 发送到串口调试助手
-}

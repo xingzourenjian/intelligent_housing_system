@@ -26,6 +26,8 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
     // 服务器配置常量
@@ -148,8 +150,6 @@ public class MainActivity extends AppCompatActivity {
                     clientSocket = new Socket(); // 创建TCP套接字
                     // 设置连接超时5秒（避免长时间阻塞）
                     clientSocket.connect(new InetSocketAddress(SERVER_IP, SERVER_PORT), 5000);
-                    // 设置读取超时30秒（服务器无响应时自动断开）
-                    clientSocket.setSoTimeout(30000);
 
                     // 初始化网络流（注意编码使用UTF-8）
                     outputWriter = new PrintWriter(clientSocket.getOutputStream(), true);
@@ -182,102 +182,121 @@ public class MainActivity extends AppCompatActivity {
     // 启动数据接收线程（持续监听服务器消息）
     // 数据接收函数（带\r\n结束符处理）
     private void startDataReceiver() {
+        // 使用线程池执行IO密集型任务，避免阻塞主线程
         executor.execute(() -> {
+            // 字符缓冲区，用于累积接收到的字符直到形成完整消息
             StringBuilder buffer = new StringBuilder();
             try {
+                // 循环监听条件：保持连接且线程未被中断
                 while (isConnected && !Thread.currentThread().isInterrupted()) {
                     try {
-                        // 逐字符读取（精确识别\r\n）
+                        // 读取单个字符（阻塞操作，直到有数据或流结束）
                         int charCode = inputReader.read();
-                        if (charCode == -1) {
-                            // 服务端关闭连接时会触发-1
-                            mainHandler.post(() ->
-                                    appendMessage("[系统] 检测到服务器关闭连接"));
+                        if (charCode == -1) { // 流结束标志（EOF）
+                            mainHandler.post(() -> appendMessage("[系统] 检测到服务器关闭连接"));
                             break;
                         }
 
-                        char ch = (char) charCode;
-                        buffer.append(ch);
+                        // 将ASCII码转换为字符并存入缓冲区
+                        buffer.append((char) charCode);
 
-                        // 检测消息结束符
+                        // 消息结束符检测
                         if (buffer.length() >= 2 &&
-                                buffer.charAt(buffer.length() - 2) == '\r' &&
-                                buffer.charAt(buffer.length() - 1) == '\n') {
+                                buffer.charAt(buffer.length()-2) == '\r' &&
+                                buffer.charAt(buffer.length()-1) == '\n') {
 
-                            // 提取完整消息（去掉结尾符）
-                            String fullMessage = buffer.substring(0, buffer.length() - 2);
+                            // 提取完整消息（去除结束符）
+                            final String rawData = buffer.substring(0, buffer.length()-2);
                             buffer.setLength(0); // 清空缓冲区
 
-                            // 处理协议消息（如服务器关闭通知）
-                            if (fullMessage.equals("SERVER_SHUTDOWN")) {
-                                mainHandler.post(() -> {
-                                    showToast("服务器维护中，连接已关闭");
-                                    appendMessage("[系统] 服务器主动关闭");
-                                });
-                                break;
-                            }
-
-                            // 正常消息处理
-                            mainHandler.post(() -> {
-                                boolean isSensorData = processSensorData(fullMessage);
-                                if (!isSensorData) {
-                                    appendMessage("收到消息: " + fullMessage);
-                                }
-                            });
+                            // 提交到主线程处理（保证UI操作线程安全）
+                            mainHandler.post(() -> processRawData(rawData));
                         }
-                    } catch (SocketTimeoutException e) {
-                        // 超时不视为错误，继续轮询
                     } catch (IOException e) {
-                        if (isConnected) { // 避免重复提示
-                            mainHandler.post(() ->
-                                    appendMessage("[错误] 连接异常: " + e.getMessage()));
+                        // 网络异常处理策略
+                        if (isConnected) {
+                            mainHandler.post(() -> appendMessage("[错误] 连接异常: " + e.getMessage()));
                         }
-                        break;
+                        break; // 退出循环，触发连接重置
                     }
                 }
-            } catch (Exception e) {
-                mainHandler.post(() ->
-                        appendMessage("[严重错误] " + e.getClass().getSimpleName() + ": " + e.getMessage()));
             } finally {
-                // 确保最终断开连接
+                // 最终保障：无论是否正常退出都重置连接
                 mainHandler.post(this::resetConnection);
             }
         });
     }
 
-    // 解析传感器数据
-    private boolean processSensorData(String rawData) {
-        // 优先处理系统协议消息
-        if (rawData.startsWith("[系统]")) {
-            appendMessage(rawData); // 将系统消息直接显示到聊天框
-            return true; // 返回true表示已经处理，无需后续处理
+    // 数据处理方法
+    private void processRawData(String rawData) {
+        // 第一次解析尝试：原始数据直接解析
+        try {
+            JSONObject json = new JSONObject(rawData);
+            handleValidJson(json);
+            return; // 解析成功直接返回
+        } catch (JSONException e) {
+            // 首次解析失败
         }
 
-        // 传感器数据处理逻辑
+        // 第二次解析尝试：去除所有空白字符，数据清洗后尝试
         try {
-            boolean hasSensorData = false; // 标记是否找到有效传感器数据
-            String cleanData = rawData.replace("message =", "").trim(); // 清理数据前缀
-            // 空数据检查
-            if (cleanData.isEmpty()) return false; // 无需处理空数据
+            // 去除所有空白字符（包括缩进和换行）
+            String sanitized = rawData.replaceAll("\\s+", "");
+            JSONObject json = new JSONObject(sanitized);
 
-            // 分割键值对
-            String[] sensorPairs = cleanData.split("\\s+"); // 通过空格分割多个传感器数据
-            for (String pair : sensorPairs) {
-                String[] kv = pair.split("="); // 通过等号分割键值
-                // 验证是否为合法键值对
-                if (kv.length == 2) {
-                    String key = kv[0].trim();  // 传感器类型
-                    String value = kv[1]
-                            .replaceAll("[^\\d.]", "") // 去除非数字字符（保留数字和小数点）
-                            .trim(); // 清理空格
-                    updateSensorUI(key, value); // 更新对应UI组件（如温度显示框）
-                    hasSensorData = true; // 标记已处理传感器数据
+            // 成功解析后提示数据格式问题
+            appendMessage("[警告] 数据包含冗余空格，已自动处理");
+            handleValidJson(json);
+        } catch (JSONException e) {
+            // 最终解析失败处理
+            appendMessage("[错误] 消息解析失败，原始数据:\n" +
+                    rawData.substring(0, Math.min(rawData.length(), 200))); // 防止长数据刷屏
+        }
+    }
+
+    // 有效JSON数据处理中枢函数
+    private void handleValidJson(JSONObject json) throws JSONException {
+        // 强类型字段提取（code必须存在且为整数）
+        int code = json.getInt("code");
+        // 安全获取可选字段（message字段不存在时返回空字符串）
+        String message = json.optString("message", "");
+
+        switch (code) {
+            case 21: // 普通文本消息
+                appendMessage("收到消息: " + message);
+                break;
+            case 22:  // 传感器数据消息
+                processSensorMessage(message);
+                break;
+            case 23: // 设备控制消息
+                appendMessage(message);
+                break;
+            case 24: // 心跳响应（静默处理）或忽略消息
+                break;
+            default:
+                appendMessage("[未知消息类型] code: " + code);
+        }
+    }
+
+    // 处理传感器数据
+    private void processSensorMessage(String sensorData) {
+        try {
+            // 第一阶段：分割键值对
+            String[] pairs = sensorData.split(",\\s*");
+            // 第二阶段：逐个解析键值对
+            for (String pair : pairs) {
+                String[] kv = pair.split(":");
+                if (kv.length == 2) { // 有效键值对
+                    String key = kv[0].trim();
+                    // 数据清洗：移除非数字和小数点字符
+                    String value = kv[1].trim()
+                            .replaceAll("[^\\d.]", "");
+                    // 委托更新UI（保证在主线程执行）
+                    updateSensorUI(key, value);
                 }
             }
-            return hasSensorData; // 返回是否处理了传感器数据
-        } catch (Exception e) {  // 错误处理：数据解析失败时显示错误信息
-            appendMessage("[错误] 数据解析失败: " + e.getMessage()); // 在聊天框显示错误信息（如数据格式错误）
-            return false;
+        } catch (Exception e) {
+            appendMessage("[错误] 传感器数据解析失败: " + e.getMessage());
         }
     }
 
