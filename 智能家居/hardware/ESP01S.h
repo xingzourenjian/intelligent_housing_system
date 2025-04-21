@@ -19,11 +19,13 @@
 
 void ESP01S_init(void);
 
+void close_ESP01S(void);
+
 uint8_t send_cmd_to_ESP01S(char *cmd, uint32_t ms);
 
 char *get_ESP01S_message(void);
 
-void print_ESP01S_send_message(void);
+void clean_ESP01S_message(void);
 
 void process_ai_response(char *ai_response);
 

@@ -98,22 +98,42 @@ static uint8_t DHT_get_byte_data(void)
 功能：
     获取DHT11的温度湿度数据
 参数：
-    data_buffer[]：接收温湿度数据
+    humidity：湿度数据指针
+	temperature：温度数据指针
 返回值：
     1：数据校验正确
     0：失败
 */
-uint8_t DHT_get_temp_humi_data(uint8_t data_buffer[])
+uint8_t DHT_get_temp_humi_data(float *humidity, float *temperature)
 {
+	uint8_t data_buffer[5] = {0};
+
     // 从模式下,DHT11接收到开始信号触发一次温湿度采集
     // 湿度整数(8bit) 湿度小数(8bit) 温度整数(8bit) 温度小数(8bit) 校验和(8bit)，高位先出
 	if(DHT_start_signal()) // if判断DHT11从机是否应答
 	{
-		data_buffer[0] = DHT_get_byte_data();  // 湿度的整数
+		data_buffer[0] = DHT_get_byte_data();  // 湿度的整数，十进制
 		data_buffer[1] = DHT_get_byte_data();  // 湿度的小数
 		data_buffer[2] = DHT_get_byte_data();  // 温度的整数
 		data_buffer[3] = DHT_get_byte_data();  // 温度的小数
 		data_buffer[4] = DHT_get_byte_data();  // 校验数据
+
+		// 湿度数据
+		if(data_buffer[1] < 10)
+			*humidity = data_buffer[0] + data_buffer[1] * 0.1;
+		else if(data_buffer[1] >= 10)
+			*humidity = data_buffer[0] + data_buffer[1] * 0.01;
+
+		// 温度数据
+		if(data_buffer[3] < 10)
+			*temperature = data_buffer[2] + data_buffer[3] * 0.1;
+		else if(data_buffer[3] >= 10)
+			*temperature = data_buffer[2] + data_buffer[3] * 0.01;
+
+		return (data_buffer[0]+data_buffer[1]+data_buffer[2]+data_buffer[3] == data_buffer[4]) ? 1 : 0; // 校验数据是否传输正确
 	}
-	return (data_buffer[0]+data_buffer[1]+data_buffer[2]+data_buffer[3] == data_buffer[4]) ? 1 : 0; // 校验数据是否传输正确
+	else
+	{
+		return 0; // DHT11从机没有应答
+	}
 }

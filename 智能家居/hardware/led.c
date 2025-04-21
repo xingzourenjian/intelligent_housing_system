@@ -68,37 +68,48 @@ void led9_breath(void)
     }
 }
 
-// PC13 系统运行成功指示灯
-void led_system(void)
-{
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
-
-	GPIO_InitTypeDef GPIO_InitStructure;
- 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
- 	GPIO_Init(GPIOC, &GPIO_InitStructure);
-
-    GPIO_ResetBits(GPIOC, GPIO_Pin_13); // 系统运行成功指示灯
-}
-
 // PA11 PA12 PA15   LED6 LED7 LED8
+// PC13          	LED10
 void led_init(void)
 {
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
 
 	GPIO_InitTypeDef GPIO_InitStructure;
  	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Pin = LED6 | LED7 | LED8; // PA11 PA12 PA15
  	GPIO_Init(GPIOA, &GPIO_InitStructure);
-    
+
+	GPIO_InitStructure.GPIO_Pin = LED10;
+ 	GPIO_Init(GPIOC, &GPIO_InitStructure);
+
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE); // 重映射，占据J-link调试端口
     GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
 
-    GPIO_ResetBits(GPIOA, LED6); // 关闭LED灯
-	GPIO_ResetBits(GPIOA, LED7);
-	GPIO_ResetBits(GPIOA, LED8);
+    GPIO_SetBits(GPIOA, LED6); // 关闭LED灯
+	GPIO_SetBits(GPIOA, LED7);
+	GPIO_SetBits(GPIOA, LED8);
+
+	GPIO_SetBits(GPIOC, LED10); // 系统运行状态指示灯
+}
+
+// PC13 系统运行状态指示灯
+void system_status_led_control(LED_STATUS state)
+{
+	if(state == LED_ON)
+	{
+		GPIO_ResetBits(GPIOC, LED10); // 打开LED灯
+	}
+	else if(state == LED_OFF)
+	{
+		GPIO_SetBits(GPIOC, LED10); // 关闭LED灯
+	}
+}
+
+void system_status_led_up(void)
+{
+	GPIO_ResetBits(GPIOC, LED10); // 打开LED灯
 }
 
 void led_control(uint16_t LED_num, LED_STATUS state)

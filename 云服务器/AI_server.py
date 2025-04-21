@@ -3,6 +3,7 @@ import socket
 import threading
 import json
 import os
+import time
 # 自己封装的包
 import AI_manager
 import client_manager
@@ -12,10 +13,6 @@ import client_manager
 """
 # 设备指令白名单库
 device_white_list = {
-    '开灯':'led_up',
-    '关灯':'led_down',
-    '开空调':'ac_on',
-    '关空调':'ac_off',
     '打开报警器':'buzzer_up',
     '关闭报警器':'buzzer_off',
     '开窗':'window_up',
@@ -38,7 +35,7 @@ ai_order = f"""\
 聊天时，自然语言回复会带上各种表情包来体现你的面部表情，且能够理解主人对环境状态的描述，主动\
 控制对应设备。请根据对话内容判断是否需要触发硬件操作。
 【任务规则】
-1、你必须且只能使用以下JSON格式响应，禁止其他形式：
+1、你必须且只能使用以下JSON格式响应，禁止其他形式，且限制message内容使用英文双引号，改用中文引号。：
 {{
     "code": 21,  # 必填！状态码(21: 仅对话；23: 设备操作和对话；24: 告诉别人忽略你本次的回答)
     "action": {{"[设备名]": "[操作指令]"}},  # 键值对，设备之间用逗号隔开，当"action"的值为空字典，表示无设备操作
@@ -93,6 +90,51 @@ stream = False # True：流式输出 默认是False：非流式输出
 
 """
 功能：
+    处理传感器数据，形成传感器数据字典
+参数：
+    original_sensor_data: "温度:5.2, 湿度:5.3, 烟雾:5.4, 一氧化碳:5.5, 光照:5.6"
+返回值：
+    成功：{"温度":32, "湿度":21, "烟雾":55, "一氧化碳":66, "光照":88}
+    失败：{}
+"""
+def processed_sensor_data(original_sensor_data: str) -> dict:
+    try:
+        sensor_data_dict = {}
+        for k_v in original_sensor_data.split(','):
+            key, value = k_v.split(':')
+            key = key.strip()
+            try:
+                sensor_data_dict[key] = float(value) if '.' in value else int(value)
+            except ValueError:
+                return {}
+
+        return sensor_data_dict
+
+    except json.JSONDecodeError:
+        return {}
+    except Exception as e:
+        return {}
+
+"""
+功能：
+    过滤STM32传感器数据，保留超过阈值的传感器数据
+参数：
+    sensor_data: {"温度":32, "湿度":21, "烟雾":55, "一氧化碳":66, "光照":88}
+返回值：
+    {"温度":32, "湿度":21}
+"""
+def filter_sensor_data(sensor_data: dict) -> dict:
+    sensor_data_cleaned_dict = {}
+
+    for key, value in sensor_data.items():
+        if key in sensor_value_cutoff:
+            if value > sensor_value_cutoff[key]:
+                sensor_data_cleaned_dict[key] = value
+
+    return sensor_data_cleaned_dict
+
+"""
+功能：
     处理客户端，线程
 参数：
     client_socket：客户端套接字
@@ -106,18 +148,18 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
         while True:
             # 获取客户端设备id
             client_mgr.send_message_to_client(client_socket, client_mgr.make_send_message("请告诉我你的设备 数字id"))
-            user_message = client_socket.recv(1024)
+            user_message = client_socket.recv(1024).decode('utf-8')
 
             try:
-                if not isinstance(int(user_message.decode('utf-8').strip()), int): # id 不是数字
+                if not isinstance(int(user_message.strip()), int): # id 不是数字
                     continue
                 else:
                     break
             except Exception:
-                print("客户端错误的id：" + user_message.decode('utf-8').strip())
+                print("客户端错误的id：" + user_message.strip())
 
         # 生成唯一客户端标识
-        device_id = int(user_message.decode('utf-8').strip())
+        device_id = int(user_message.strip())
 
         # 添加到客户端套接字列表
         client_ip, client_port = client_socket.getpeername()
@@ -131,12 +173,12 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
         try:
             # AI初始问候
             ai_response_message = AI_mgr.get_response(message_to_ai) # 获取 AI大模型 的回复
-            print("本AI大人：", json.loads(ai_response_message))
+            print("本AI大人：", ai_response_message)
 
             # 更新AI消息到历史记录
             message_to_ai.append({"role": "assistant", "content": ai_response_message}) # 添加回复的消息到历史对话记录
             message_temp = {"role": "assistant", "content": json.loads(ai_response_message).get('message', "")} # 封装格式
-            AI_mgr.save_message_to_history(json.dumps(message_temp), history_filename) # 保存AI消息到历史记录文件
+            AI_mgr.save_message_to_history(json.dumps(message_temp, ensure_ascii=False), history_filename) # 保存AI消息到历史记录文件
 
             # 处理AI的回复
             processed_ai_message = AI_mgr.handle_response(ai_response_message)
@@ -148,65 +190,77 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
         while True:
             try:
                 # 等待用户消息
-                user_message = client_socket.recv(1024)
+                user_message = client_socket.recv(1024).decode('utf-8')
 
                 # 用户客户端主动断开连接
                 if not user_message:
                     print(f"客户端 IP: {client_ip}, 端口: {client_port} 已断开连接！")
                     break
 
-                print(f"用户 IP: {client_ip}, 端口: {client_port} 的消息：{user_message.decode('utf-8')}")
+                # 来自ESP01S的消息，假设是心跳包
+                if client_mgr.get_client_device_type(client_socket) == client_mgr.client_device_type_list[1]:
+                    if user_message.rstrip('\r\n') == "heartbeat":
+                        client_mgr.send_message_to_client(client_socket, client_mgr.make_send_message("OK")) # 告诉客户端我收到了
+                        continue # 拦截心跳包消息
 
-                # # 如果用户消息是字典型json字符串
-                # try:
-                #     user_message_dict = json.loads(user_message.decode('utf-8').strip())
-                #     if isinstance(user_message_dict, dict): # 用户消息是字典
-                #         if "device_type" in user_message_dict: # 说明是更新客户端设备类型的消息，{"device_type": "ESP01S"}，拦截并处理客户端消息
-                #             client_mgr.update_client_dev_type(client_socket, user_message_dict.get("device_type", "PHONE"))
-                #             client_mgr.send_message_to_client(client_socket, client_mgr.make_send_message("设备类型更换成功！"))
-                #             print("设备类型更换成功！")
-                #             continue
-                #         # for key in user_message_dict:
-                #         #     if key in sensor_value_cutoff: # 说明是传感器消息，{温度:32, 湿度:21, 烟雾:55, 一氧化碳:66, 光照:88}\r\n
-                #         #         client_mgr.send_message_to_all_phone_clients(client_socket)
-                #         #         print("更新移动终端传感器数据成功")
-                # except Exception:
-                #     pass
+                print(f"用户 IP: {client_ip}, 端口: {client_port} 的消息：{user_message}")
+
+                # 假设是更新客户端设备类型的消息，{"device_type": "ESP01S"}，拦截并处理客户端消息
+                try:
+                    user_message_dict = json.loads(user_message.rstrip('\r\n'))
+                    if isinstance(user_message_dict, dict):
+                        if "device_type" in user_message_dict:
+                            client_mgr.update_client_dev_type(client_socket, user_message_dict.get("device_type", "PHONE"))
+                            client_mgr.send_message_to_client(client_socket, client_mgr.make_send_message("设备类型更换成功！"))
+                            print("设备类型更换成功！")
+                            continue
+                except Exception:
+                    pass
+
+                # 来自ESP01S的消息，假设是传感器消息，"温度:5.2, 湿度:5.3, 烟雾:5.4, 一氧化碳:5.5, 光照:5.6\r\n"
+                if client_mgr.get_client_device_type(client_socket) == client_mgr.client_device_type_list[1]:
+                    sensor_data_dict = processed_sensor_data(user_message.rstrip('\r\n'))
+                    if sensor_data_dict: # 是传感器数据
+                        client_mgr.send_message_to_all_phone_clients(client_socket, client_mgr.make_send_message(user_message.rstrip('\r\n'), client_manager.MESSAGE_TYPE.SENSOR.value)) # 转发给所有的移动终端
+                        sensor_data_cleaned_dict = filter_sensor_data(sensor_data_dict) # 过滤传感器数据
+                        if sensor_data_cleaned_dict: # 不拦截, 有传感器数据超过阈值了
+                            user_message = json.dumps(sensor_data_cleaned_dict, ensure_ascii=False)
+                        else:
+                            client_mgr.send_message_to_client(client_socket, client_mgr.make_send_message("OK")) # 告诉客户端我收到了
+                            continue # 拦截传感器消息
 
                 # 更新用户消息到历史记录
-                message_to_ai.append({"role": "user", "content": user_message.decode("utf-8")}) # 添加用户的消息到历史对话记录
-                message_temp = {"role": "user", "content": user_message.decode('utf-8')}  # 封装格式
-                AI_mgr.save_message_to_history(json.dumps(message_temp), history_filename) # 保存用户消息到历史记录文件
+                message_to_ai.append({"role": "user", "content": user_message}) # 添加用户的消息到历史对话记录
+                message_temp = {"role": "user", "content": user_message}  # 封装格式
+                AI_mgr.save_message_to_history(json.dumps(message_temp, ensure_ascii=False), history_filename) # 保存用户消息到历史记录文件
 
                 # 获取 AI大模型 的回复
                 ai_response_message = AI_mgr.get_response(message_to_ai)
                 try:
-                    print("本AI大人：", json.loads(ai_response_message))
+                    print("本AI大人：", ai_response_message)
 
                     # 更新AI消息到历史记录
                     message_to_ai.append({"role": "assistant", "content": ai_response_message}) # 添加回复的消息到历史对话记录
                     message_temp = {"role": "assistant", "content": json.loads(ai_response_message).get('message', "")} # 封装格式
-                    AI_mgr.save_message_to_history(json.dumps(message_temp), history_filename) # 保存AI消息到历史记录文件
+                    AI_mgr.save_message_to_history(json.dumps(message_temp, ensure_ascii=False), history_filename) # 保存AI消息到历史记录文件
 
                     # 将AI消息发给客户端
                     processed_ai_message = AI_mgr.handle_response(ai_response_message) # 处理AI的回复
                     client_mgr.send_message_to_client(client_socket, processed_ai_message)
 
-                    # """
-                    # 如果是由ESP01S汇报的传感器消息出发的AI警报提醒，
-                    # 通知所有的移动终端
-                    # """
-                    # if client_mgr.get_client_device_type(client_socket) == client_mgr.client_device_type_list[1]: # ESP01S客户端套接字
-                    #     if processed_ai_message["code"] != client_mgr.MESSAGE_TYPE.IGNORE.value: # AI的警告消息
-                    #         client_mgr.send_message_to_all_phone_clients(client_socket, processed_ai_message)
-                    #         print("已将警报消息通知所有的移动终端")
+                    # 来自ESP01S的消息，传感器数据触发AI警报提醒
+                    if client_mgr.get_client_device_type(client_socket) == client_mgr.client_device_type_list[1]: # 本次警告是传感器数据触发
+                        if processed_ai_message["code"] == client_manager.MESSAGE_TYPE.DEVICE.value: # AI的警告消息
+                            client_mgr.send_message_to_all_phone_clients(client_socket, processed_ai_message)
+                            print("已将警报消息通知所有的移动终端")
                 except json.JSONDecodeError:
-                    print("AI返回了无效的JSON:", ai_response_message)
+                    client_mgr.send_message_to_client(client_socket, client_mgr.make_send_message("AI回复格式错误"))
+                    print(f"AI返回了无效的JSON（原始内容）: {repr(ai_response_message)}")
 
                 # 通过聊天断开连接
-                user_message = user_message.decode("utf-8").lower()
+                user_message_temp = user_message.lower()
                 exit_keywords = ["再见", "回聊", "拜", "bye", "退出", "quit", "exit"]
-                if any(keyword in user_message for keyword in exit_keywords):
+                if any(keyword in user_message_temp for keyword in exit_keywords):
                     print(f"客户端 IP: {client_ip}, 端口: {client_port} 已断开连接！")
                     break
             # 连接异常断开

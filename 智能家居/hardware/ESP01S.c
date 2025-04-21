@@ -2,6 +2,7 @@
 
 static char UART3_rx_packet[UART3_MAX_RECV_LEN] = {0};
 static uint8_t p_UART3_rx_packet = 0;
+static uint8_t UART3_rx_flag = 0; // 接收标志位
 static char UART3_tx_packet[UART3_MAX_SEND_LEN] = {0};
 
 // 计数器溢出频率：CK_PSC / (PSC+1) / (ARR+1)
@@ -109,6 +110,7 @@ static void UART3_send_number(uint32_t number)
 static void clean_UART3_rx_packet(void)
 {
     memset(UART3_rx_packet, 0, sizeof(UART3_rx_packet)); // 清空接收缓存
+    UART3_rx_flag = 0; // 清空接收标志位
     p_UART3_rx_packet = 0; // 重置接收指针
 }
 
@@ -147,7 +149,7 @@ void TIM2_IRQHandler(void)
 	if(TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
     {
 	    //等待时间超过1s
-	    UART3_rx_packet[p_UART3_rx_packet] = '\0'; // 添加字符串结束符
+	    UART3_rx_flag = 1; // 设置接收标志位
 		TIM_Cmd(TIM2, DISABLE); //接收数据结束，停止计时
 		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
 	}
@@ -184,36 +186,10 @@ void ESP01S_init(void)
     clean_UART3_rx_packet();
     while(!send_cmd_to_ESP01S("AT+CIPSEND\r\n", 500)); // 进入透传
     clean_UART3_rx_packet();
+}
 
-    printf("21\r\n"); // 告诉服务端我的设备id
-    print_ESP01S_send_message(); // # 服务端回复：AI初始问候语
-    clean_UART3_rx_packet();
-    delay_ms(50); // 防止tcp粘包
-
-    printf("{\"device_type\": \"ESP01S\"}\r\n");  // 告诉服务端我的设备类型
-    print_ESP01S_send_message(); // # 服务端回复：设备类型更换成功！
-    clean_UART3_rx_packet();
-    delay_ms(50);
-
-    // 与服务端通信
-    int n1 = 39;
-    int n2 = 30;
-    int n3 = 30;
-    int n4 = 19;
-    int n5 = 1;
-    while(1)
-    {
-        printf("温度=%d 湿度=%d 烟雾=%d 一氧化碳=%d 光照=%d\r\n", n1++, n2++, n3++, n4++, n5++); // 上传传感器数据，确定消息格式
-
-        print_ESP01S_send_message(); // 发送AI消息到蓝牙模块
-
-        process_ai_response(get_ESP01S_message()); // 处理ESP01S返回的消息
-
-        clean_UART3_rx_packet(); // 清空接收缓存
-
-        delay_ms(6000); // 每隔6秒上传一次数据
-    }
-
+void close_ESP01S(void)
+{
     // 退出透传模式
     delay_ms(1000);
     while(!send_cmd_to_ESP01S("+++", 1000));
@@ -239,86 +215,88 @@ uint8_t send_cmd_to_ESP01S(char *cmd, uint32_t ms)
         ret_flag = 0;
     else
         ret_flag = 0;
-    
-    // return ret_flag;
+
+    return ret_flag;
 }
 
 char *get_ESP01S_message(void)
 {
-    return UART3_rx_packet; // 返回接收缓存
+    if(UART3_rx_flag == 1)
+        return UART3_rx_packet; // 获取接收缓存
+
+    return NULL; // 没有接收到数据，返回NULL
 }
 
-void print_ESP01S_send_message(void)
+void clean_ESP01S_message(void)
 {
-    char *ESP01S_message = NULL;
-    while(1)
-    {
-        ESP01S_message = get_ESP01S_message();
-        if(*ESP01S_message != '\0') // ESP01S开始返回的消息
-        {
-            delay_ms(1000); // 等待数据接收完成，定时器添加结束符
-            ESP01S_message = get_ESP01S_message(); // 获取接收缓存
+    clean_UART3_rx_packet(); // 清空接收缓存
+}
 
-            send_message_to_blue_string("AI:\r"); // 发送消息到蓝牙模块
-            send_message_to_blue_string(ESP01S_message);
-            break;
+// 解析AI返回的消息 {"code": 23, "action": {"开窗":"window_up", "打开报警器": "buzzer_up"}, "message": "消息"}\r\n
+static int get_action_and_message(char *ai_response, char device_cmd[MAX_CMD_COUNT][MAX_CMD_LEN], char message[MAX_MESSAGE_LEN])
+{
+    int cmd_count = 0;
+    memset(device_cmd, 0, MAX_CMD_COUNT * MAX_CMD_LEN);
+    memset(message, 0, MAX_MESSAGE_LEN);
+
+    char *p = strstr(ai_response, "code"); // 检查 code 是否存在
+    if(!p)
+        return cmd_count;
+
+    p = strchr(p, ':'); // 定位到 "code": 冒号
+
+    // 定位到值的第一个非空白符
+    int skipped_chars = 0;
+    sscanf(p+1, "%*[ \t\n\r]%n", &skipped_chars); // 跳过连续的空白字符（空格、制表符、换行符、回车符） 没跳过时，skipped_chars变量不会被赋值
+    p += skipped_chars;
+
+    int code = 0;
+    sscanf(p, "%d", &code); // 获取 code 的值
+
+    // 提取设备控制指令
+    if(code == 23) // 仅当code=23时解析action
+    {
+        p = strstr(p, "action"); // 检查 action 是否存在
+        if(p)
+        {
+            p = strchr(p, '{'); // 定位到 action 对象起始位置，即指向 '{'
+            char *p_end = strchr(p, '}'); // 定位到 action 对象结束位置，即指向 '}'
+            while(cmd_count < MAX_CMD_COUNT)
+            {
+                // 跳过键
+                p = strchr(p, ':'); // 定位到键后面的冒号
+                if(p > p_end)
+                    break;
+
+                p = strchr(p, '\"'); // 定位到值的起始引号
+
+                // 定位到值的第一个非空白符
+                sscanf(p+1, "%*[ \t\n\r]%n", &skipped_chars); // 跳过连续的空白字符（空格、制表符、换行符、回车符）
+                p += skipped_chars;
+
+                // 获取值
+                sscanf(p, "%[^\"]", device_cmd[cmd_count++]);
+            }
         }
     }
-}
 
-// 解析AI返回的消息
-static void get_action_and_message(char *ai_response, char device_cmd[MAX_CMD_COUNT][MAX_CMD_LEN], int *cmd_count, char message[MAX_MESSAGE_LEN])
-{
-    const char *ptr = ai_response;
-
-    memset(device_cmd, 0, sizeof(char) * MAX_CMD_COUNT * MAX_CMD_LEN); // 清空命令数组
-    memset(message, 0, sizeof(char) * MAX_MESSAGE_LEN); // 清空消息内容
-    *cmd_count = 0; // 初始化命令计数器
-
-    /*
-        AI两种类型的消息：
-            "action = 0; message = ......\r\n"
-            "action = 开窗: window_up, 打开报警器: buzzer_up; message = ......\r\n"
-    */
-
-    // 提取设备控制命令到 device_cmd 字符串数组
-    while(*cmd_count < MAX_CMD_COUNT)
+    // 提取消息内容
+    p = strstr(ai_response, "message");
+    if(p)
     {
-        // 找到冒号字符
-        ptr = strchr(ptr, ':');
-        if(ptr == NULL) // 找不到冒号，说明没有设备命令
-            break;
+        p = strchr(p, ':'); // 定位到键后面的冒号
 
-        // 定位值的起始位置（冒号后的第一个非空格字符）
-        ptr++;
-        while(*ptr == ' ')
-            ptr++;
+        p = strchr(p, '\"'); // 定位到值的起始引号
 
-        // 提取一个设备命令到 device_cmd 字符串数组
-        char temp[MAX_CMD_LEN] = {0};
-        sscanf(ptr, "%64[^,;]", temp); // 读取到逗号或分号为止
-        strcpy(device_cmd[*cmd_count], temp);
+        // 定位到值的第一个非空白符
+        sscanf(p+1, "%*[ \t\n\r]%n", &skipped_chars); // 跳过连续的空白字符（空格、制表符、换行符、回车符）
+        p += skipped_chars;
 
-        (*cmd_count)++; // 设备命令计数器加1
-
-        // 移动到下一个分隔符
-        ptr = strpbrk(ptr, ",;");
-        if(ptr == NULL) // 找不到分隔符，说明没有更多的设备命令
-            break;
+        // 获取值
+        sscanf(p, "%[^\"]", message);
     }
 
-    // 提取消息内容到 message 字符串
-    ptr = strstr(ai_response, "message"); // 定位到消息内容
-    ptr = strchr(ptr, '=');
-
-    // 定位消息的起始位置（第一个非空格字符）
-    ptr++;
-    while(*ptr == ' ')
-        ptr++;
-
-    char temp[MAX_MESSAGE_LEN] = {0};
-    sscanf(ptr, "%256[^\r\n]", temp); // 自动包含\0终止符，即匹配到\r\n或\0结束
-    strcpy(message, temp);
+    return cmd_count;
 }
 
 // 执行设备控制命令
@@ -349,7 +327,7 @@ void process_ai_response(char *ai_response)
     int cmd_count = 0; // 设备命令计数器
 
     // 解析AI返回的消息
-    get_action_and_message(ai_response, device_cmd, &cmd_count, message);
+    cmd_count = get_action_and_message(ai_response, device_cmd, message);
 
     // 执行设备控制命令
     for(int i = 0; i < cmd_count; i++)

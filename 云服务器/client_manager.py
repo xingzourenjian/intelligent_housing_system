@@ -132,7 +132,7 @@ class client_manager:
         发送消息给客户端 (自动添加\r\n结尾)
     参数：
         client_socket：客户端套接字
-        send_message: {"code": 21, "action": {}, "message": "消息"}，字典
+        send_message: {"code": 23, "action": {"开窗":"window_up", "打开报警器": "buzzer_up"}, "message": "消息"}，字典
     返回值：
         void
     """
@@ -144,10 +144,10 @@ class client_manager:
         try:
             # 构造原始消息字符串，例：{"code": 21, "action": {}, "message": "消息"}\r\n
             original_message_str = json.dumps(send_message, ensure_ascii=False) # indent=4 是冗余空白符
-            original_message = original_message_str + "\r\n" # 给ESP01S的消息
+            original_message = original_message_str + "\r\n"
 
             try:
-                # 移动终端客户端套接字调用该函数
+                # 移动终端客户端
                 if self.get_client_device_type(client_socket) == self.client_device_type_list[0]:
                         # 发给自己
                         client_socket.send(original_message.encode('utf-8'))
@@ -157,8 +157,11 @@ class client_manager:
                                 if self.get_client_device_type(client_socket_i) == self.client_device_type_list[1]: # 是ESP01S客户端套接字
                                     client_socket_i.send(original_message.encode('utf-8'))
                                     break
-                # ESP01S客户端套接字调用该函数
+                # ESP01S客户端
                 elif self.get_client_device_type(client_socket) == self.client_device_type_list[1]:
+                    client_socket.send(original_message.encode('utf-8'))
+                # 未知设备客户端
+                else:
                     client_socket.send(original_message.encode('utf-8'))
             except BrokenPipeError:
                 self.close_client(client_socket)

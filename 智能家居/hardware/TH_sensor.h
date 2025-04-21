@@ -7,6 +7,6 @@
 
 void DHT_init(void);
 
-uint8_t DHT_get_temp_humi_data(uint8_t data_buffer[]); // 获取温湿度数据
+uint8_t DHT_get_temp_humi_data(float *humidity, float *temperature);
 
 #endif

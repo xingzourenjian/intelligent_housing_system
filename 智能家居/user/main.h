@@ -2,6 +2,8 @@
 #define __MAIN_H__
 
 #include "stm32f10x.h"
+#include <string.h> // 定义了NULL
+#include <stdio.h>
 #include "delay.h"
 #include "buzzer.h"
 #include "light_sensor.h"
@@ -17,5 +19,15 @@
 #include "motor.h"
 #include "key.h"
 #include "ASRPRO.h"
+
+// 传感器数据结构体
+typedef struct sensor_data_node
+{
+    float temperature;
+    float humidity;
+    float smoke;
+    float co;
+    float light;
+}sensor_data_node;
 
 #endif
