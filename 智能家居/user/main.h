@@ -5,6 +5,7 @@
 #include <string.h> // 定义了NULL
 #include <stdio.h>
 #include "delay.h"
+
 #include "buzzer.h"
 #include "light_sensor.h"
 #include "OLED.h"
@@ -12,7 +13,6 @@
 #include "ESP01S.h"
 #include "led.h"
 #include "bluetooth.h"
-#include "device_white_list.h"
 #include "TH_sensor.h"
 #include "MQ2.h"
 #include "MQ7.h"

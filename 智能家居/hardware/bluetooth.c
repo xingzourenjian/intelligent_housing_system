@@ -75,25 +75,10 @@ static void UART2_send_number(uint32_t number)
 	}while(number);
 }
 
-static void UART2_rx_packet_print(void)
+static void clean_UART2_rx_packet(void)
 {
-    if(UART2_rx_flag == 1)
-    {
-        UART2_rx_flag = 0;
-        UART2_send_string(UART2_rx_packet);
-    }
-}
-
-
-// 获取接收的信息
-static char *get_UART2_rx_packet(void)
-{
-    if(UART2_rx_flag == 1)
-    {
-        UART2_rx_flag = 0;
-        return (char *)UART2_rx_packet;
-    }
-    return NULL;
+    memset(UART2_rx_packet, 0, sizeof(UART2_rx_packet)); // 清空接收缓存
+    UART2_rx_flag = 0; // 清空接收标志位
 }
 
 void USART2_IRQHandler(void)
@@ -107,7 +92,7 @@ void USART2_IRQHandler(void)
 
 		if(rx_state == 0) // 等待接收
         {
-			if(rx_data == '@' && UART2_rx_flag == 0)
+			if(rx_data == '@')
             {
 				rx_state = 1;
 			}
@@ -151,5 +136,15 @@ void send_message_to_blue_num(uint32_t number)
 
 char *get_blue_message(void)
 {
-    return get_UART2_rx_packet();
+    if(UART2_rx_flag == 1)
+    {
+        delay_ms(5);
+        return (char *)UART2_rx_packet;
+    }
+    return NULL;
+}
+
+void clean_blue_message(void)
+{
+	clean_UART2_rx_packet();
 }

@@ -168,6 +168,7 @@ void ESP01S_init(void)
     clean_UART3_rx_packet(); // 清空接收缓存
 
     while(!send_cmd_to_ESP01S("AT+SAVETRANSLINK=0\r\n", 500)); // 关闭透传模式自动重连
+    clean_UART3_rx_packet();
 
     // // 连接WiFi
     // while(!send_cmd_to_ESP01S("AT+CWMODE=3\r\n", 500)); // STA+AP模式
@@ -179,7 +180,7 @@ void ESP01S_init(void)
     while(!send_cmd_to_ESP01S("AT+CIPMUX=0\r\n", 500)); // 单路连接模式
     clean_UART3_rx_packet();
     while(!send_cmd_to_ESP01S("AT+CIPSTART=\"TCP\",\"47.86.228.121\",8086\r\n", 1000)); // 建立TCP连接
-    clean_UART3_rx_packet();
+    clean_UART3_rx_packet(); // 一连接成功，服务端会马上发一条消息给我，丢弃不要
 
     // 进入透传模式
     while(!send_cmd_to_ESP01S("AT+CIPMODE=1\r\n", 500)); // 开启透传模式

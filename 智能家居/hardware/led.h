@@ -29,6 +29,8 @@ void system_status_led_control(LED_STATUS state);
 
 void system_status_led_up(void);
 
+void system_status_led_down(void);
+
 void led_control(uint16_t LED_num, LED_STATUS state);
 
 void led_up(uint16_t LED_num);

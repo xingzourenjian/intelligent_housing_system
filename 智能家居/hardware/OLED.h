@@ -7,7 +7,7 @@ void OLED_Init(void);
 
 void OLED_Clear(void);
 
-void OLED_ShowChar(uint8_t Line, uint8_t Column, char Char); // 单个字符
+void OLED_ShowChar(uint8_t Line, uint8_t Column, char Char); // 单个字符 行位置，范围：1~4 列位置，范围：1~16
 
 void OLED_ShowString(uint8_t Line, uint8_t Column, char *String); // 字符串
 

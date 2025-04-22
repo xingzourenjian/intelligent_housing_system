@@ -137,3 +137,21 @@ uint8_t DHT_get_temp_humi_data(float *humidity, float *temperature)
 		return 0; // DHT11从机没有应答
 	}
 }
+
+void show_DHT_sensor_value_OLED(uint8_t line, uint8_t column)
+{
+	float humidity = 0.0, temperature = 0.0;
+
+	DHT_get_temp_humi_data(&humidity, &temperature); // 获取温湿度数据
+	OLED_ShowString(line, column, "H:");
+	OLED_ShowNum(line, column+2, (uint32_t)humidity, 2); // 显示湿度整数部分
+	OLED_ShowChar(line, column+4, '.');
+	OLED_ShowNum(line, column+5, (uint32_t)(humidity * 10) % 10, 1); // 显示湿度小数部分
+	OLED_ShowString(line, column+6, "%"); // 显示百分号
+
+	OLED_ShowString(line, column+8, "T:");
+	OLED_ShowNum(line, column+10, (uint32_t)temperature, 2); // 显示温度整数部分
+	OLED_ShowChar(line, column+12, '.');
+	OLED_ShowNum(line, column+13, (uint32_t)(temperature * 10) % 10, 1); // 显示温度小数部分
+	OLED_ShowString(line, column+14, "C"); // 显示摄氏度符号
+}

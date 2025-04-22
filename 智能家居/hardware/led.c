@@ -112,6 +112,11 @@ void system_status_led_up(void)
 	GPIO_ResetBits(GPIOC, LED10); // 打开LED灯
 }
 
+void system_status_led_down(void)
+{
+	GPIO_SetBits(GPIOC, LED10); // 关闭LED灯
+}
+
 void led_control(uint16_t LED_num, LED_STATUS state)
 {
 	if(state == LED_ON)

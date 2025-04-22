@@ -47,6 +47,7 @@ static void ADC_init(uint16_t GPIO_Pin, uint8_t ADC_Channel)
 static uint16_t get_ADC_value(uint8_t ADC_Channel)
 {
     ADC_RegularChannelConfig(ADC1, ADC_Channel, 1, ADC_SampleTime_28Cycles5); // 配置通道，采样顺序1
+    ADC_GetConversionValue(ADC1); // 丢掉残留数据
     ADC_SoftwareStartConvCmd(ADC1, ENABLE); // 手动触发单次转换
     while (ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET); // 等待转换完成
     return ADC_GetConversionValue(ADC1);
@@ -77,10 +78,12 @@ float get_light_sensor_voltage_value(void)
     return 1.0 * get_ADC_value(ADC_Channel_5) / 4095 * 3.3;
 }
 
-void show_light_sensor_voltage_value_OLED(uint8_t line, uint8_t column)
+void show_light_sensor_value_OLED(uint8_t line, uint8_t column)
 {
-    float value = get_light_sensor_voltage_value();
-    OLED_ShowNum(line, column, (uint32_t)value, 1);
-    OLED_ShowChar(line, column+1, '.');
-    OLED_ShowNum(line, column+2, (uint32_t)(value * 100) % 100, 2);
+    float value = get_light_sensor_value();
+
+    OLED_ShowString(line, column, "light:");
+    OLED_ShowNum(line, column+6, (uint32_t)value, 2);
+    OLED_ShowChar(line, column+8, '.');
+    OLED_ShowNum(line, column+9, (uint32_t)(value * 10) % 10, 1);
 }

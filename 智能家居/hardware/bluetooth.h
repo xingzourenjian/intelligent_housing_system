@@ -17,4 +17,6 @@ void send_message_to_blue_num(uint32_t number);
 
 char *get_blue_message(void);
 
+void clean_blue_message(void);
+
 #endif

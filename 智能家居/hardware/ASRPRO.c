@@ -101,3 +101,45 @@ void ASRPRO_init(void)
 {
 	UART1_init();
 }
+
+void send_message_to_ASRPRO_string(char *str)
+{
+    UART1_send_string(str);
+}
+
+void send_message_to_ASRPRO_num(uint32_t number)
+{
+	UART1_send_number(number);
+}
+
+char *get_ASRPRO_message(void)
+{
+    if(*UART1_rx_packet != '\0') // 如果接收缓存不为空
+        return (char *)UART1_rx_packet;
+    return NULL;
+}
+
+void clean_ASRPRO_message(void)
+{
+	clean_UART1_rx_packet();
+}
+
+// 执行设备控制命令
+static int execute_command(const char *device_cmd)
+{
+    int cmd_map_table_len = get_cmd_map_table_len(); // 获取命令映射表大小
+
+    if(cmd_map_table_len <= 0) // 映射表为空，返回错误
+        return 0;
+
+    // 遍历映射表查找匹配命令
+    for(int i = 0; i < cmd_map_table_len; i++)
+    {
+        if(strcmp(device_cmd, cmd_map_table[i].cmd) == 0)
+        {
+            cmd_map_table[i].func(); // 调用对应函数
+            return 1;
+        }
+    }
+    return 0; // 未找到匹配命令
+}
