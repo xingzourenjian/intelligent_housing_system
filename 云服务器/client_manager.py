@@ -17,6 +17,7 @@ class client_manager:
         # 实例属性
         self.clients = {}  # 结构: {client_socket: {"dev_type": ...}, }
         self.clients_lock = threading.Lock()  # 创建线程锁，防止套接字字典被同时操作
+        self.client_locks = {}  # 创建客户端套接字发送锁字典，防止多个线程向同一个客户端同时发送消息
         self.client_device_type_list = ["PHONE", "ESP01S"]
 
     """
@@ -41,6 +42,7 @@ class client_manager:
                 "device_id":device_id,
                 "connect_time": time.time(), # 当前时间
             }
+            self.client_locks[client_socket] = threading.Lock()  # 为每个客户端创建锁
 
     """
     功能：
@@ -53,8 +55,10 @@ class client_manager:
     def close_client(self, client_socket: socket.socket) -> None:
         client_socket.close()
         with self.clients_lock:
-            if client_socket in self.clients: # 遍历键
+            if client_socket in self.clients: # 遍历键，把它从客户端字典中删除
                 del self.clients[client_socket]
+            if client_socket in self.client_locks: # 把它从客户端锁字典中删除
+                del self.client_locks[client_socket]
 
     """
     功能：
@@ -150,7 +154,8 @@ class client_manager:
                 # 移动终端客户端
                 if self.get_client_device_type(client_socket) == self.client_device_type_list[0]:
                         # 发给自己
-                        client_socket.send(original_message.encode('utf-8'))
+                        with self.client_locks[client_socket]:
+                            client_socket.send(original_message.encode('utf-8'))
                         # 发给ESP01S，如果是设备控制消息
                         if send_message["code"] == MESSAGE_TYPE.DEVICE.value:
                             for client_socket_i in self.clients: # 遍历键
@@ -162,7 +167,8 @@ class client_manager:
                     client_socket.send(original_message.encode('utf-8'))
                 # 未知设备客户端
                 else:
-                    client_socket.send(original_message.encode('utf-8'))
+                    with self.client_locks[client_socket]:
+                        client_socket.send(original_message.encode('utf-8'))
             except BrokenPipeError:
                 self.close_client(client_socket)
             except Exception as e:

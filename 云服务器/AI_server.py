@@ -158,9 +158,11 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
                 if not isinstance(int(user_message.strip()), int): # id 不是数字
                     continue
                 else:
+                    client_mgr.send_message_to_client(client_socket, client_mgr.make_send_message("OK")) # 告诉客户端 id 接收成功
                     break
             except Exception:
                 print("客户端错误的id：" + user_message.strip())
+            time.sleep(3)
 
         # 生成唯一客户端标识
         device_id = int(user_message.strip())
@@ -215,7 +217,7 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
                     if isinstance(user_message_dict, dict):
                         if "device_type" in user_message_dict:
                             client_mgr.update_client_dev_type(client_socket, user_message_dict.get("device_type", "PHONE"))
-                            client_mgr.send_message_to_client(client_socket, client_mgr.make_send_message("设备类型更换成功！"))
+                            client_mgr.send_message_to_client(client_socket, client_mgr.make_send_message("OK"))
                             print("设备类型更换成功！")
                             continue
                 except Exception:
@@ -230,7 +232,6 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
                         if sensor_data_cleaned_dict: # 不拦截, 有传感器数据超过阈值了
                             user_message = json.dumps(sensor_data_cleaned_dict, ensure_ascii=False)
                         else:
-                            client_mgr.send_message_to_client(client_socket, client_mgr.make_send_message("OK")) # 告诉客户端我收到了
                             continue # 拦截传感器消息
 
                 # 更新用户消息到历史记录

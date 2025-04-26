@@ -1,20 +1,11 @@
 #include "TH_sensor.h"
 
 // PB1 DHT11数据引脚
-
-/*
-功能：
-    DHT11_GPIO初始化
-参数：
-    void
-返回值：
-    void
-*/
 void DHT_init(void)
 {
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 	GPIO_InitTypeDef GPIO_InitStructure;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;  // 推挽输出模式
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_1;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
@@ -53,7 +44,7 @@ static uint8_t DHT_start_signal(void)
     // 主机拉低总线 >18ms，通知DHT11开始通信
 	change_DHT_GPIO_mode(GPIO_Mode_Out_PP); // 推挽输出模式
 	GPIO_ResetBits(GPIOB, GPIO_Pin_1);      // 主机控制单总线输出20ms低电平
-	delay_ms(20);
+	vTaskDelay(pdMS_TO_TICKS(20));
 
     // 释放总线，输出高电平, 总线由上拉电阻拉高
     GPIO_SetBits(GPIOB, GPIO_Pin_1);        // 主机释放总线
@@ -133,9 +124,7 @@ uint8_t DHT_get_temp_humi_data(float *humidity, float *temperature)
 		return (data_buffer[0]+data_buffer[1]+data_buffer[2]+data_buffer[3] == data_buffer[4]) ? 1 : 0; // 校验数据是否传输正确
 	}
 	else
-	{
 		return 0; // DHT11从机没有应答
-	}
 }
 
 void show_DHT_sensor_value_OLED(uint8_t line, uint8_t column)

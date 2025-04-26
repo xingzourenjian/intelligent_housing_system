@@ -3,11 +3,9 @@
 
 #include "stm32f10x.h"
 #include <stdio.h>
-#include "delay.h"
 #include <string.h> // 定义了NULL
 
 #define UART2_MAX_RECV_LEN 1024
-#define UART2_MAX_SEND_LEN 1024
 
 void blue_init(void);
 

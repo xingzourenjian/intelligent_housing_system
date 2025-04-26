@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private CardView cardSensors;     // 传感器卡片容器（用于折叠动画）
 
     // 状态控制变量
-    private boolean isSensorsExpanded = true;  // 传感器区域是否展开（true=展开，false=折叠）
+    private boolean isSensorsExpanded = false;  // 传感器区域是否展开（true=展开，false=折叠）
 
     // 网络连接相关
     private volatile Socket clientSocket;     // 网络套接字（volatile保证多线程可见性）
@@ -65,6 +65,9 @@ public class MainActivity extends AppCompatActivity {
 
         initUIComponents();    // 初始化所有界面组件
         checkNetworkPermission(); // 检查网络权限（Android 6.0+需要动态申请权限）
+
+        // 立即应用传感器区状态
+        applyInitialCardState();
     }
 
     // 初始化所有界面组件
@@ -91,6 +94,16 @@ public class MainActivity extends AppCompatActivity {
         isSensorsExpanded = !isSensorsExpanded;  // 切换展开状态
         toggleSensorsCard();           // 执行折叠动画
         updateToggleButtonIcon();     // 更新按钮图标
+    }
+
+    private void applyInitialCardState() {
+        // 直接设置布局参数（不带动画）
+        ViewGroup.LayoutParams params = cardSensors.getLayoutParams();
+        params.height = isSensorsExpanded ? ViewGroup.LayoutParams.WRAP_CONTENT : 0;
+        cardSensors.setLayoutParams(params);
+
+        // 强制布局立即更新
+        cardSensors.requestLayout();
     }
 
     // 执行传感器卡片的折叠/展开动画
@@ -263,18 +276,18 @@ public class MainActivity extends AppCompatActivity {
 
         switch (code) {
             case 21: // 普通文本消息
-                appendMessage("收到消息: " + message);
+                appendMessage("AI消息: " + message);
                 break;
             case 22:  // 传感器数据消息
                 processSensorMessage(message);
                 break;
             case 23: // 设备控制消息
-                appendMessage(message);
+                appendMessage("AI消息: " + message);
                 break;
             case 24: // 心跳响应（静默处理）或忽略消息
                 break;
             default:
-                appendMessage("[未知消息类型] code: " + code);
+                appendMessage("AI消息: " + "[未知消息类型] code: " + code);
         }
     }
 
@@ -306,23 +319,23 @@ public class MainActivity extends AppCompatActivity {
             String formattedValue; // 格式化后的显示文本
             switch (type) {
                 case "温度":
-                    formattedValue = String.format("温度: %s℃", value);
+                    formattedValue = String.format("温度: %s ℃", value);
                     tvTemperature.setText(formattedValue);
                     break;
                 case "湿度":
-                    formattedValue = String.format("湿度: %s%%", value);
+                    formattedValue = String.format("湿度: %s %%", value);
                     tvHumidity.setText(formattedValue);
                     break;
                 case "烟雾":
-                    formattedValue = String.format("烟雾: %sppm", value);
+                    formattedValue = String.format("烟雾: %s ppm", value);
                     tvSmoke.setText(formattedValue);
                     break;
                 case "一氧化碳":
-                    formattedValue = String.format("一氧化碳: %sppm", value);
+                    formattedValue = String.format("一氧化碳: %s ppm", value);
                     tvCO.setText(formattedValue);
                     break;
                 case "光照":
-                    formattedValue = String.format("光照: %sLux", value);
+                    formattedValue = String.format("光照: %s Lux", value);
                     tvLight.setText(formattedValue);
                     break;
             }

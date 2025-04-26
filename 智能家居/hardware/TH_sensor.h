@@ -2,6 +2,8 @@
 #define __TH_SENSOR_H__
 
 #include "stm32f10x.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "delay.h"
 #include <string.h> // 定义了NULL
 #include "OLED.h"

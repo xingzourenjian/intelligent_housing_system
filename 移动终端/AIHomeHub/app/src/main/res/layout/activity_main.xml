@@ -89,7 +89,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_weight="1"
-                        android:text="温度：--℃"
+                        android:text="温度：-- ℃"
                         android:textSize="16sp"
                         android:textColor="@color/text_primary"/> <!-- 文字颜色 -->
                 </LinearLayout>
@@ -123,7 +123,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_weight="1"
-                        android:text="湿度：--%"
+                        android:text="湿度：-- %"
                         android:textSize="16sp"
                         android:textColor="@color/text_primary"/>
                 </LinearLayout>
@@ -157,41 +157,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_weight="1"
-                        android:text="烟雾：--ppm"
-                        android:textSize="16sp"
-                        android:textColor="@color/text_primary"/>
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
-
-            <!-- 光照传感器卡片 -->
-            <androidx.cardview.widget.CardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_margin="4dp"
-                app:cardCornerRadius="8dp"
-                app:cardElevation="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="16dp"
-                    android:background="@drawable/bg_sensor_item">
-
-                    <ImageView
-                        android:id="@+id/icon_light"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
-                        android:src="@drawable/ic_light"
-                        android:contentDescription="光照图标"/>
-
-                    <TextView
-                        android:id="@+id/tv_light"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_weight="1"
-                        android:text="光照：--Lux"
+                        android:text="烟雾：-- ppm"
                         android:textSize="16sp"
                         android:textColor="@color/text_primary"/>
                 </LinearLayout>
@@ -225,7 +191,41 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_weight="1"
-                        android:text="一氧化碳：--ppm"
+                        android:text="一氧化碳：-- ppm"
+                        android:textSize="16sp"
+                        android:textColor="@color/text_primary"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- 光照传感器卡片 -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:background="@drawable/bg_sensor_item">
+
+                    <ImageView
+                        android:id="@+id/icon_light"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/ic_light"
+                        android:contentDescription="光照图标"/>
+
+                    <TextView
+                        android:id="@+id/tv_light"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:text="光照：-- Lux"
                         android:textSize="16sp"
                         android:textColor="@color/text_primary"/>
                 </LinearLayout>

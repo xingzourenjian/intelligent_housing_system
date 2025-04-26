@@ -3,14 +3,14 @@
 static void ADC_init(uint16_t GPIO_Pin, uint8_t ADC_Channel)
 {
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE); // 开启时钟外设
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
     // 初始化GPIO口
 	GPIO_InitTypeDef GPIO_InitStructure;
-	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN; // 模拟功能模式，禁用上下拉
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AIN;
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_Init(GPIOB, &GPIO_InitStructure); // 时钟外设初始化
+	GPIO_Init(GPIOB, &GPIO_InitStructure);
 
     // 配置通道，采样顺序1
     ADC_RegularChannelConfig(ADC1, ADC_Channel, 1, ADC_SampleTime_28Cycles5);
@@ -28,10 +28,6 @@ static void ADC_init(uint16_t GPIO_Pin, uint8_t ADC_Channel)
     ADC_InitStruct.ADC_ScanConvMode = DISABLE; // 扫描转换模式
 	ADC_Init(ADC1, &ADC_InitStruct);
 
-	// 中断
-
-	// 看门狗
-
 	// 开启ADC
 	ADC_Cmd(ADC1, ENABLE);
 
@@ -42,6 +38,8 @@ static void ADC_init(uint16_t GPIO_Pin, uint8_t ADC_Channel)
     while(ADC_GetCalibrationStatus(ADC1) == SET); // 等待校准完成
 
     ADC_SoftwareStartConvCmd(ADC1, ENABLE);
+    
+    ADC_GetConversionValue(ADC1); // 丢掉首次采样不稳定值
 }
 
 static uint16_t get_ADC_value(uint8_t ADC_Channel)
@@ -49,7 +47,7 @@ static uint16_t get_ADC_value(uint8_t ADC_Channel)
     ADC_RegularChannelConfig(ADC1, ADC_Channel, 1, ADC_SampleTime_28Cycles5); // 配置通道，采样顺序1
     ADC_GetConversionValue(ADC1);  // 丢掉残留数据
     ADC_SoftwareStartConvCmd(ADC1, ENABLE); // 手动触发单次转换
-    while (ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET); // 等待转换完成
+    while(ADC_GetFlagStatus(ADC1, ADC_FLAG_EOC) == RESET); // 等待转换完成
     return ADC_GetConversionValue(ADC1);
 }
 
@@ -66,7 +64,7 @@ float get_MQ7_sensor_value(void)
     for(int i = 0; i < 5; i++)
     {
         value += get_ADC_value(ADC_Channel_8); // 获取ADC值 0-4095
-        delay_ms(5);
+        vTaskDelay(pdMS_TO_TICKS(2)); // 避免ADC采样不稳定
     }
     value /= 5; // 取平均值
 

@@ -8,7 +8,7 @@ PWM分辨率：1 / (ARR+1)
 */
 static void PWM_init(void)
 {
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE); // 打开通用定时器
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
 	GPIO_InitTypeDef GPIO_InitStructure;
@@ -18,7 +18,7 @@ static void PWM_init(void)
  	GPIO_Init(GPIOB, &GPIO_InitStructure);
 
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
-	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;  // 72MHz
+	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1; // 输入信号采样分频器，不影响定时、PWM、输出比较
 	TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseInitStructure.TIM_Period = 100 - 1;    		// ARR，范围0~65535
 	TIM_TimeBaseInitStructure.TIM_Prescaler = 36 - 1;  		// PSC

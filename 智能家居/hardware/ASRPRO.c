@@ -1,8 +1,7 @@
 #include "ASRPRO.h"
 
 static char UART1_rx_packet[UART1_MAX_RECV_LEN] = {0};
-static uint8_t p_UART1_rx_packet = 0;
-static char UART1_tx_packet[UART1_MAX_SEND_LEN] = {0};
+static uint8_t UART1_rx_flag = 0;
 
 // PA9   UART1_TX
 // PA10  UART1_RX
@@ -54,9 +53,7 @@ static void UART1_send_string(char *string)
 {
 	uint8_t i = 0;
 	for(i = 0; string[i] != '\0'; i++)
-    {
 		UART1_send_byte(string[i]);
-	}
 }
 
 static void UART1_send_number(uint32_t number)
@@ -79,19 +76,36 @@ static void UART1_send_number(uint32_t number)
 static void clean_UART1_rx_packet(void)
 {
     memset(UART1_rx_packet, 0, sizeof(UART1_rx_packet)); // 清空接收缓存
-    p_UART1_rx_packet = 0; // 重置接收指针
+    UART1_rx_flag = 0; // 清空接收标志位
 }
 
 void USART1_IRQHandler(void)
 {
+    static uint8_t rx_state = 0;
+	static uint8_t p_rx_packet = 0;
+
 	if(USART_GetITStatus(USART1, USART_IT_RXNE) == SET)
     {
 		uint8_t rx_data = USART_ReceiveData(USART1);
 
-        UART1_rx_packet[p_UART1_rx_packet++] = rx_data;
+		if(rx_state == 0) // 等待接收
+			if(rx_data == '@')
+				rx_state = 1;
+		else if(rx_state == 1) // 开始接收
+        {
+			if(rx_data == '#') // 结束接收
+            {
+				UART1_rx_packet[p_rx_packet] = '\0';
+				UART1_rx_flag = 1;
+				rx_state = 0;
+				p_rx_packet = 0;
+			}
+			else // 接收中
+				if(p_rx_packet < UART1_MAX_RECV_LEN - 1) // 防止溢出
+					UART1_rx_packet[p_rx_packet++] = rx_data;
+		}
 
     	USART_ClearITPendingBit(USART1, USART_IT_RXNE);
-    	// RXNE位也可以通过写入0来清除
     }
 }
 
@@ -114,7 +128,7 @@ void send_message_to_ASRPRO_num(uint32_t number)
 
 char *get_ASRPRO_message(void)
 {
-    if(*UART1_rx_packet != '\0') // 如果接收缓存不为空
+    if(UART1_rx_flag == 1)
         return (char *)UART1_rx_packet;
     return NULL;
 }
@@ -122,24 +136,4 @@ char *get_ASRPRO_message(void)
 void clean_ASRPRO_message(void)
 {
 	clean_UART1_rx_packet();
-}
-
-// 执行设备控制命令
-static int execute_command(const char *device_cmd)
-{
-    int cmd_map_table_len = get_cmd_map_table_len(); // 获取命令映射表大小
-
-    if(cmd_map_table_len <= 0) // 映射表为空，返回错误
-        return 0;
-
-    // 遍历映射表查找匹配命令
-    for(int i = 0; i < cmd_map_table_len; i++)
-    {
-        if(strcmp(device_cmd, cmd_map_table[i].cmd) == 0)
-        {
-            cmd_map_table[i].func(); // 调用对应函数
-            return 1;
-        }
-    }
-    return 0; // 未找到匹配命令
 }

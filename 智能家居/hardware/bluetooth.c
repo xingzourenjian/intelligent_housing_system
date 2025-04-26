@@ -53,9 +53,7 @@ static void UART2_send_string(char *string)
 {
 	uint8_t i = 0;
 	for(i = 0; string[i] != '\0'; i++)
-    {
 		UART2_send_byte((uint8_t)string[i]);
-	}
 }
 
 static void UART2_send_number(uint32_t number)
@@ -91,12 +89,8 @@ void USART2_IRQHandler(void)
 		uint8_t rx_data = USART_ReceiveData(USART2);
 
 		if(rx_state == 0) // 等待接收
-        {
 			if(rx_data == '@')
-            {
 				rx_state = 1;
-			}
-		}
 		else if(rx_state == 1) // 开始接收
         {
 			if(rx_data == '#') // 结束接收
@@ -107,13 +101,11 @@ void USART2_IRQHandler(void)
 				p_rx_packet = 0;
 			}
 			else // 接收中
-            {
-				UART2_rx_packet[p_rx_packet++] = rx_data;
-			}
+				if(p_rx_packet < UART2_MAX_RECV_LEN - 1) // 防止溢出
+					UART2_rx_packet[p_rx_packet++] = rx_data;
 		}
 
     	USART_ClearITPendingBit(USART2, USART_IT_RXNE);
-    	// RXNE位也可以通过写入0来清除
     }
 }
 
@@ -137,10 +129,7 @@ void send_message_to_blue_num(uint32_t number)
 char *get_blue_message(void)
 {
     if(UART2_rx_flag == 1)
-    {
-        delay_ms(5);
         return (char *)UART2_rx_packet;
-    }
     return NULL;
 }
 

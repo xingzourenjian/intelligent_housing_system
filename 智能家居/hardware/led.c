@@ -8,7 +8,7 @@ PWM分辨率：1 / (ARR+1)
 */
 static void PWM_init(void)
 {
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE); // 打开通用定时器
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
 	GPIO_InitTypeDef GPIO_InitStructure;
@@ -25,9 +25,9 @@ static void PWM_init(void)
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
 	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1; // 72MHz
 	TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
-	TIM_TimeBaseInitStructure.TIM_Period = LED_ARR - 1;      // ARR，范围0~65535
-	TIM_TimeBaseInitStructure.TIM_Prescaler = LED_PSC - 1;   // PSC
-	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0; // 重复计数器，高级定时器才有
+	TIM_TimeBaseInitStructure.TIM_Period = LED_ARR - 1;      	// ARR，范围0~65535
+	TIM_TimeBaseInitStructure.TIM_Prescaler = LED_PSC - 1;  	// PSC
+	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0; 		// 重复计数器，高级定时器才有
 	TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStructure);
 
     // 输出比较通道
@@ -59,12 +59,12 @@ void led9_breath(void)
     for(i = 0; i<=LED_ARR; i++)
     {
         PWM_set_compare2(i);
-        delay_ms(10);
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
     for(i = 0; i<=LED_ARR; i++)
     {
         PWM_set_compare2(LED_ARR - i);
-        delay_ms(10);
+        vTaskDelay(pdMS_TO_TICKS(10));
     }
 }
 
@@ -98,55 +98,47 @@ void led_init(void)
 void system_status_led_control(LED_STATUS state)
 {
 	if(state == LED_ON)
-	{
-		GPIO_ResetBits(GPIOC, LED10); // 打开LED灯
-	}
+		GPIO_ResetBits(GPIOC, LED10);
 	else if(state == LED_OFF)
-	{
-		GPIO_SetBits(GPIOC, LED10); // 关闭LED灯
-	}
+		GPIO_SetBits(GPIOC, LED10);
 }
 
 void system_status_led_up(void)
 {
-	GPIO_ResetBits(GPIOC, LED10); // 打开LED灯
+	GPIO_ResetBits(GPIOC, LED10);
 }
 
 void system_status_led_down(void)
 {
-	GPIO_SetBits(GPIOC, LED10); // 关闭LED灯
+	GPIO_SetBits(GPIOC, LED10);
 }
 
 void led_control(uint16_t LED_num, LED_STATUS state)
 {
 	if(state == LED_ON)
-	{
-		GPIO_ResetBits(GPIOA, LED_num); // 打开LED灯
-	}
+		GPIO_ResetBits(GPIOA, LED_num);
 	else if(state == LED_OFF)
-	{
-		GPIO_SetBits(GPIOA, LED_num); // 关闭LED灯
-	}
+		GPIO_SetBits(GPIOA, LED_num);
 }
 
 void led_up(uint16_t LED_num)
 {
-	led_control(LED_num, LED_ON); // 打开LED灯
+	led_control(LED_num, LED_ON);
 }
 
 void led_down(uint16_t LED_num)
 {
-	led_control(LED_num, LED_OFF); // 关闭LED灯
+	led_control(LED_num, LED_OFF);
 }
 
 void led_flip(uint16_t LED_num)
 {
     if(GPIO_ReadInputDataBit(GPIOA, LED_num) == 0)
 	{
-		GPIO_SetBits(GPIOA, LED_num); // 关闭LED灯
+		GPIO_SetBits(GPIOA, LED_num);
 	}
 	else
 	{
-		GPIO_ResetBits(GPIOA, LED_num); // 打开LED灯
+		GPIO_ResetBits(GPIOA, LED_num);
 	}
 }

@@ -2,7 +2,8 @@
 #define __LED_H__
 
 #include "stm32f10x.h"
-#include "delay.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
 #define LED_ARR 100 // PWM的ARR值，范围0~65535
 #define LED_PSC 720 // PWM的PSC值，范围0~65535

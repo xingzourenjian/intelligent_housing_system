@@ -2,8 +2,9 @@
 #define __MQ7_H__
 
 #include "stm32f10x.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "OLED.h"
-#include "delay.h"
 
 void MQ7_sensor_init(void);
 

@@ -2,8 +2,9 @@
 #define __LIGHT_SENSOR_H__
 
 #include "stm32f10x.h"
+#include "FreeRTOS.h"
+#include "task.h"
 #include "OLED.h"
-#include "delay.h"
 
 void light_sensor_init(void);
 

@@ -2,8 +2,6 @@
 #define __BUZZER_H__
 
 #include "stm32f10x.h"
-#include "led.h"
-#include "delay.h"
 
 typedef enum
 {
@@ -25,7 +23,5 @@ void buzzer_control(BUZZER_STATUS state); // 控制蜂鸣器状态
 void buzzer_up(void); // 打开蜂鸣器
 
 void buzzer_off(void); // 关闭蜂鸣器
-
-void buzzer_pre_warn(BUZZER_PRE_WARN pre_warn_select); // 蜂鸣器预警
 
 #endif
