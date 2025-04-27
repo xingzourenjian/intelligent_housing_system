@@ -11,9 +11,11 @@
 #include "task.h"
 #include "device_white_list.h"
 
-
 #define UART3_MAX_RECV_LEN 512
 #define UART3_MAX_SEND_LEN 512
+
+extern char UART3_rx_packet[UART3_MAX_RECV_LEN];
+extern uint8_t UART3_rx_flag;
 
 // AI返回的消息格
 #define MAX_CMD_COUNT 12        // 最大device_cmd数量
@@ -28,10 +30,10 @@ char *get_ESP01S_message(void);
 
 void clean_ESP01S_message(void);
 
-int is_device_control_message(char *ai_response);
+int judge_ai_message_type(char *ai_response);
 
-int execute_command(const char *device_cmd);
+uint8_t execute_command(const char *device_cmd);
 
-int process_ai_response(char *ai_response);
+uint8_t process_ai_device_control_cmd(char *ai_response);
 
 #endif

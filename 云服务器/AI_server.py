@@ -158,11 +158,10 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
                 if not isinstance(int(user_message.strip()), int): # id 不是数字
                     continue
                 else:
-                    client_mgr.send_message_to_client(client_socket, client_mgr.make_send_message("OK")) # 告诉客户端 id 接收成功
                     break
             except Exception:
                 print("客户端错误的id：" + user_message.strip())
-            time.sleep(3)
+            time.sleep(3.0)
 
         # 生成唯一客户端标识
         device_id = int(user_message.strip())
@@ -264,7 +263,7 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
 
                 # 通过聊天断开连接
                 user_message_temp = user_message.lower()
-                exit_keywords = ["再见", "回聊", "拜", "bye", "退出", "quit", "exit"]
+                exit_keywords = ["回见", "再见", "回聊", "拜", "bye", "退出", "quit", "exit"]
                 if any(keyword in user_message_temp for keyword in exit_keywords):
                     print(f"客户端 IP: {client_ip}, 端口: {client_port} 已断开连接！")
                     break
@@ -277,18 +276,17 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
         client_mgr.close_client(client_socket)
 
 if __name__ == '__main__':
+    # 初始化实例
+    client_mgr = client_manager.client_manager() # 客户端管理器实例
+    AI_mgr = AI_manager.AI_manager(client, model, stream, device_white_list) # AI管理器实例
+
+    AI_mgr.clean_all_histories() # 调试阶段，清空历史对话文件
+
+    # 1、使用socket类创建套接字对象
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #AF_INET 用于网络之间的进程通信 SOCK_STREAM 表示用TCP协议编程
+
+    server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # 允许端口复用
     try:
-        # 初始化实例
-        client_mgr = client_manager.client_manager() # 客户端管理器实例
-        AI_mgr = AI_manager.AI_manager(client, model, stream, device_white_list) # AI管理器实例
-
-        AI_mgr.clean_all_histories() # 调试阶段，清空历史对话文件
-
-        # 1、使用socket类创建套接字对象
-        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) #AF_INET 用于网络之间的进程通信 SOCK_STREAM 表示用TCP协议编程
-
-        server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1) # 允许端口复用
-
         # 2、使用bind((ip, port))方法绑定IP地址和端口号
         ip = "172.24.145.220"
         port = 8086

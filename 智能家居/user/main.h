@@ -51,6 +51,14 @@ typedef struct
     char status; // 云端连接状态 0: 断开连接 1: 已连接
 }cloud_status_node;
 
+typedef enum
+{
+    NORMAL_MESSAGE = 21, // 普通消息
+    SENSOR_MESSAGE = 22, // 传感器消息
+    DEVICE_MESSAGE = 23, // 设备控制消息
+    IGNORE_MESSAGE = 24, // 忽略消息
+}AI_MESSAGE_TYPE;
+
 void monitor_task(void *task_params);
 
 void ai_cloud_control_task(void *task_params);
@@ -58,6 +66,14 @@ void ai_cloud_control_task(void *task_params);
 void local_edge_control_task(void *task_params);
 
 void system_init(void);
+
+void recreation_mode(sensor_data_node *sensor_data); // 娱乐模式函数
+
+void awary_mode(void); // 离家模式函数
+
+void sleep_mode(void); // 睡眠模式
+
+void emergency_escape_mode(void); // 紧急逃生模式
 
 void OLED_refresh(char *str);
 

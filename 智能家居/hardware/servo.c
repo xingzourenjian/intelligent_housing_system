@@ -58,10 +58,10 @@ void servo_set_angle(float angle)
 
 void servo_window_up(void)
 {
-	servo_set_angle(180); // 打开窗户
+	servo_set_angle(120); // 打开窗户
 }
 
 void servo_window_off(void)
 {
-	servo_set_angle(0); // 关闭窗户
+	servo_set_angle(30); // 关闭窗户
 }

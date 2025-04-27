@@ -43,6 +43,8 @@ class client_manager:
                 "connect_time": time.time(), # 当前时间
             }
             self.client_locks[client_socket] = threading.Lock()  # 为每个客户端创建锁
+            # 禁用Nagle算法
+            client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
     """
     功能：
@@ -154,7 +156,7 @@ class client_manager:
                 # 移动终端客户端
                 if self.get_client_device_type(client_socket) == self.client_device_type_list[0]:
                         # 发给自己
-                        with self.client_locks[client_socket]:
+                        with self.client_locks[client_socket]: # 只给移动终端加发送锁
                             client_socket.send(original_message.encode('utf-8'))
                         # 发给ESP01S，如果是设备控制消息
                         if send_message["code"] == MESSAGE_TYPE.DEVICE.value:
@@ -167,8 +169,7 @@ class client_manager:
                     client_socket.send(original_message.encode('utf-8'))
                 # 未知设备客户端
                 else:
-                    with self.client_locks[client_socket]:
-                        client_socket.send(original_message.encode('utf-8'))
+                    client_socket.send(original_message.encode('utf-8'))
             except BrokenPipeError:
                 self.close_client(client_socket)
             except Exception as e:

@@ -1,8 +1,10 @@
 #include "ESP01S.h"
 
-static char UART3_rx_packet[UART3_MAX_RECV_LEN] = {0};
+static uint8_t receive_mode = 1; // 接收模式
+
+char UART3_rx_packet[UART3_MAX_RECV_LEN] = {0};
 static uint8_t p_UART3_rx_packet = 0;
-static uint8_t UART3_rx_flag = 0; // 接收标志位
+uint8_t UART3_rx_flag = 0; // 接收标志位
 
 // 计数器溢出频率：CK_PSC / (PSC+1) / (ARR+1)
 // 定时1s
@@ -132,11 +134,26 @@ void USART3_IRQHandler(void)
     {
 		uint8_t rx_data = USART_ReceiveData(USART3);
 
-        TIM_SetCounter(TIM2, 0); // 重新计数
-        TIM_Cmd(TIM2, ENABLE);
+        if(receive_mode == 1)
+        {
+            TIM_SetCounter(TIM2, 0); // 重新计数
+            TIM_Cmd(TIM2, ENABLE);
 
-        if(p_UART3_rx_packet < UART3_MAX_RECV_LEN - 1) // 防止溢出
-            UART3_rx_packet[p_UART3_rx_packet++] = rx_data;
+            if(p_UART3_rx_packet < UART3_MAX_RECV_LEN - 1) // 字符串后面是结束符，防止溢出
+                UART3_rx_packet[p_UART3_rx_packet++] = rx_data;
+        }
+        else if(receive_mode == 2)
+        {
+            if(p_UART3_rx_packet < UART3_MAX_RECV_LEN - 1)
+            {
+                UART3_rx_packet[p_UART3_rx_packet++] = rx_data;
+                if(p_UART3_rx_packet >= 2)
+                    if(UART3_rx_packet[p_UART3_rx_packet-2] == '\r' && UART3_rx_packet[p_UART3_rx_packet-1] == '\n')
+                        UART3_rx_flag = 1;
+            }
+        }
+
+
 
     	USART_ClearITPendingBit(USART3, USART_IT_RXNE);
     }
@@ -160,6 +177,9 @@ void ESP01S_init(void)
 {
     timer_init();
 	UART3_init();
+
+    // 接收模式默认为1，接收ESP01S模块消息
+    receive_mode = 1;
 
     // 清楚异常断开的影响
     send_cmd_to_ESP01S("+++", 1000);
@@ -186,6 +206,9 @@ void ESP01S_init(void)
     clean_UART3_rx_packet();
     while(!send_cmd_to_ESP01S("AT+CIPSEND\r\n", 500)); // 进入透传
     clean_UART3_rx_packet();
+
+    // 转换接收模式，即接收服务端消息
+    receive_mode = 2;
 }
 
 uint8_t send_cmd_to_ESP01S(char *cmd, uint32_t ms)
@@ -218,8 +241,8 @@ void clean_ESP01S_message(void)
     clean_UART3_rx_packet(); // 清空接收缓存
 }
 
-// 判断是否是设备控制消息
-int is_device_control_message(char *ai_response)
+// 判断AI消息类型
+int judge_ai_message_type(char *ai_response)
 {
     char *p = strstr(ai_response, "code"); // 检查 code 是否存在
     if(!p)
@@ -235,16 +258,13 @@ int is_device_control_message(char *ai_response)
     int code = 0;
     sscanf(p, "%d", &code); // 获取 code 的值
 
-    if(code == 23)
-        return 1; // 设备控制消息
-
-    return 0;
+    return code;
 }
 
 // 解析AI返回的消息 {"code": 23, "action": {"开窗":"window_up", "打开报警器": "buzzer_up"}, "message": "消息"}\r\n
-static int get_action_and_message(char *ai_response, char device_cmd[MAX_CMD_COUNT][MAX_CMD_LEN])
+static uint8_t get_action_and_message(char *ai_response, char device_cmd[MAX_CMD_COUNT][MAX_CMD_LEN])
 {
-    int cmd_count = 0;
+    uint8_t cmd_count = 0;
     memset(device_cmd, 0, MAX_CMD_COUNT * MAX_CMD_LEN);
 
     char *p = strstr(ai_response, "code"); // 检查 code 是否存在
@@ -310,7 +330,7 @@ static int get_action_and_message(char *ai_response, char device_cmd[MAX_CMD_COU
 }
 
 // 执行设备控制命令
-int execute_command(const char *device_cmd)
+uint8_t execute_command(const char *device_cmd)
 {
     int cmd_map_table_len = get_cmd_map_table_len(); // 获取命令映射表大小
 
@@ -327,18 +347,19 @@ int execute_command(const char *device_cmd)
     return 0; // 未找到匹配命令
 }
 
-// 处理AI响应的消息
-int process_ai_response(char *ai_response)
+// 处理AI设备控制命令
+uint8_t process_ai_device_control_cmd(char *ai_response)
 {
     char device_cmd[MAX_CMD_COUNT][MAX_CMD_LEN] = {0}; // 存储设备命令
-    int cmd_count = 0; // 设备命令计数器
+    uint8_t cmd_count = 0; // 设备命令计数器
+    uint8_t exec_flag = 0; // 执行命令结果
 
     // 解析AI返回的消息
     cmd_count = get_action_and_message(ai_response, device_cmd);
 
     // 执行设备控制命令
-    for(int i = 0; i < cmd_count; i++)
-        execute_command(device_cmd[i]); // 执行设备控制命令
+    for(uint8_t i = 0; i < cmd_count; i++)
+        exec_flag = execute_command(device_cmd[i]); // 执行设备控制命令
 
-    return cmd_count; // 返回设备命令数量
+    return exec_flag; // 返回执行命令结果
 }

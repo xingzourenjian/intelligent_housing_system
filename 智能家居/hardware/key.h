@@ -2,9 +2,9 @@
 #define __KEY_H__
 
 #include "stm32f10x.h"
-#include "FreeRTOS.h"
-#include "task.h"
+#include "delay.h"
 #include "led.h"
+#include "buzzer.h"
 
 void key_init(void);
 

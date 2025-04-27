@@ -13,11 +13,18 @@ void delay_init(void)
     TIM_InitStruct.TIM_RepetitionCounter = 0;             // 高级定时器专用，通用定时器忽略
     TIM_TimeBaseInit(TIM3, &TIM_InitStruct);
 
-    TIM_Cmd(TIM3, ENABLE);
+    TIM_Cmd(TIM3, DISABLE);
 }
 
 void delay_us(uint16_t us)
 {
-  TIM_SetCounter(TIM3, 0);                      // 清零计数器
-  while(TIM_GetCounter(TIM3) < us);             // 等待计数值达到目标微秒数
+    TIM_Cmd(TIM3, ENABLE);
+    TIM_SetCounter(TIM3, 0);                      // 清零计数器
+    while(TIM_GetCounter(TIM3) < us);             // 等待计数值达到目标微秒数
+    TIM_Cmd(TIM3, DISABLE);
+}
+
+void delay_ms(uint16_t ms)
+{
+    delay_us(ms * 1000);
 }

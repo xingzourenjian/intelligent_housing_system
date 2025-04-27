@@ -14,7 +14,7 @@ static void PWM_init(void)
 	GPIO_InitTypeDef GPIO_InitStructure;
  	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Pin = LED9; // PB3
+	GPIO_InitStructure.GPIO_Pin = ROOM_LED; // PB3
  	GPIO_Init(GPIOB, &GPIO_InitStructure);
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE); // 重映射，占据J-link调试端口
@@ -48,24 +48,24 @@ static void PWM_set_compare2(uint16_t compare)
 }
 
 // PB3 LED9
-void led9_breath_init(void)
+void room_lamp_init(void)
 {
     PWM_init();
 }
 
-void led9_breath(void)
+void room_lamp_adjust(uint16_t adjust_value)
 {
-    int i = 0;
-    for(i = 0; i<=LED_ARR; i++)
-    {
-        PWM_set_compare2(i);
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
-    for(i = 0; i<=LED_ARR; i++)
-    {
-        PWM_set_compare2(LED_ARR - i);
-        vTaskDelay(pdMS_TO_TICKS(10));
-    }
+    PWM_set_compare2(-adjust_value);
+}
+
+void room_lamp_up(void)
+{
+    PWM_set_compare2(0);
+}
+
+void room_lamp_off(void)
+{
+    PWM_set_compare2(100);
 }
 
 // PA11 PA12 PA15   LED6 LED7 LED8
@@ -78,39 +78,39 @@ void led_init(void)
 	GPIO_InitTypeDef GPIO_InitStructure;
  	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-	GPIO_InitStructure.GPIO_Pin = LED6 | LED7 | LED8; // PA11 PA12 PA15
+	GPIO_InitStructure.GPIO_Pin = GREEN_LED | YELLOW_LED | RED_LED; // PA11 PA12 PA15
  	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
-	GPIO_InitStructure.GPIO_Pin = LED10;
+	GPIO_InitStructure.GPIO_Pin = SYSTEM_LED;
  	GPIO_Init(GPIOC, &GPIO_InitStructure);
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE); // 重映射，占据J-link调试端口
     GPIO_PinRemapConfig(GPIO_Remap_SWJ_JTAGDisable, ENABLE);
 
-    GPIO_SetBits(GPIOA, LED6); // 关闭LED灯
-	GPIO_SetBits(GPIOA, LED7);
-	GPIO_SetBits(GPIOA, LED8);
+    GPIO_SetBits(GPIOA, GREEN_LED); // 关闭LED灯
+	GPIO_SetBits(GPIOA, YELLOW_LED);
+	GPIO_SetBits(GPIOA, RED_LED);
 
-	GPIO_SetBits(GPIOC, LED10); // 系统运行状态指示灯
+	GPIO_SetBits(GPIOC, SYSTEM_LED); // 系统运行状态指示灯
 }
 
 // PC13 系统运行状态指示灯
 void system_status_led_control(LED_STATUS state)
 {
 	if(state == LED_ON)
-		GPIO_ResetBits(GPIOC, LED10);
+		GPIO_ResetBits(GPIOC, SYSTEM_LED);
 	else if(state == LED_OFF)
-		GPIO_SetBits(GPIOC, LED10);
+		GPIO_SetBits(GPIOC, SYSTEM_LED);
 }
 
 void system_status_led_up(void)
 {
-	GPIO_ResetBits(GPIOC, LED10);
+	GPIO_ResetBits(GPIOC, SYSTEM_LED);
 }
 
 void system_status_led_down(void)
 {
-	GPIO_SetBits(GPIOC, LED10);
+	GPIO_SetBits(GPIOC, SYSTEM_LED);
 }
 
 void led_control(uint16_t LED_num, LED_STATUS state)
@@ -126,7 +126,7 @@ void led_up(uint16_t LED_num)
 	led_control(LED_num, LED_ON);
 }
 
-void led_down(uint16_t LED_num)
+void led_off(uint16_t LED_num)
 {
 	led_control(LED_num, LED_OFF);
 }
@@ -141,4 +141,40 @@ void led_flip(uint16_t LED_num)
 	{
 		GPIO_ResetBits(GPIOA, LED_num);
 	}
+}
+
+void close_all_alarm_led(void)
+{
+	led_off(YELLOW_LED);
+	led_off(RED_LED);
+}
+
+void led_green_up(void)
+{
+	led_control(GREEN_LED, LED_ON);
+}
+
+void led_green_off(void)
+{
+	led_control(GREEN_LED, LED_OFF);
+}
+
+void led_yellow_up(void)
+{
+	led_control(YELLOW_LED, LED_ON);
+}
+
+void led_yellow_off(void)
+{
+	led_control(YELLOW_LED, LED_OFF);
+}
+
+void led_red_up(void)
+{
+	led_control(RED_LED, LED_ON);
+}
+
+void led_red_off(void)
+{
+	led_control(RED_LED, LED_OFF);
 }

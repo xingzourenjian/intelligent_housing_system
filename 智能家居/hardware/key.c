@@ -39,11 +39,12 @@ void EXTI9_5_IRQHandler(void)
 	{
 		if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7) == 0)
 		{
-			vTaskDelay(pdMS_TO_TICKS(20));							//延时消抖
+			delay_ms(20);											//延时消抖
             while(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7) == 0);	//等待按键松手
-            vTaskDelay(pdMS_TO_TICKS(20));
+            delay_ms(20);
 
-			led_flip(LED8);
+			close_all_alarm_led();  // 关闭所有警报灯
+			buzzer_off();           // 关闭警报
 		}
 		EXTI_ClearITPendingBit(EXTI_Line7);		//清除外部中断7号线的中断标志位
 	}

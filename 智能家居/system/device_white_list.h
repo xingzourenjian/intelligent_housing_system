@@ -4,6 +4,7 @@
 #include "stm32f10x.h"
 #include "buzzer.h"
 #include "servo.h"
+#include "motor.h"
 #include "led.h"
 
 // 设备控制函数原型（统一接口）
