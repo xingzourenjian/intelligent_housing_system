@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h> // 定义了NULL
 
-#define UART2_MAX_RECV_LEN 1024
+#define UART2_MAX_RECV_LEN 512
 
 void blue_init(void);
 

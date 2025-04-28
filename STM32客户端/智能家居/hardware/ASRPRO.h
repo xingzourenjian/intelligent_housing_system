@@ -7,7 +7,7 @@
 #include "device_white_list.h"
 #include "ESP01S.h"
 
-#define UART1_MAX_RECV_LEN 1024
+#define UART1_MAX_RECV_LEN 512
 
 void ASRPRO_init(void);
 

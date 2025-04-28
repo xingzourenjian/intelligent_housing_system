@@ -27,8 +27,7 @@ int main(int argc, const char *argv[])
     vTaskStartScheduler();
 
     // 任务调度器不会到达这里, 如果到达这里，说明调度器启动失败
-    while(1)
-    {
+    while(1){
         buzzer_up();
     }
 }
@@ -36,12 +35,10 @@ int main(int argc, const char *argv[])
 // 监控任务
 void monitor_task(void *task_params)
 {
-    while(1)
-    {
+    while(1){
         // 处理AI设备控制消息
         char *ai_response = get_ESP01S_message();
-        if(ai_response != NULL && judge_ai_message_type(ai_response) == DEVICE_MESSAGE)
-        {
+        if(ai_response != NULL && judge_ai_message_type(ai_response) == DEVICE_MESSAGE){
             process_ai_device_control_cmd(ai_response);
             clean_ESP01S_message();
         }
@@ -73,11 +70,9 @@ void ai_cloud_control_task(void *task_params)
 
     // 与服务端握手
     printf("21\r\n"); // 告诉服务端我的设备id
-    while(1)
-    {
+    while(1){
         char *ai_response = get_ESP01S_message();
-        if(ai_response != NULL && judge_ai_message_type(ai_response) == NORMAL_MESSAGE) // AI招呼语
-        {
+        if(ai_response != NULL && judge_ai_message_type(ai_response) == NORMAL_MESSAGE){ // AI招呼语
             clean_ESP01S_message();
             break; // 握手成功，退出循环
         }
@@ -85,11 +80,9 @@ void ai_cloud_control_task(void *task_params)
     }
 
     printf("{\"device_type\": \"ESP01S\"}\r\n");  // 告诉服务端我的设备类型
-    while(1)
-    {
+    while(1){
         char *ai_response = get_ESP01S_message();
-        if(ai_response != NULL && judge_ai_message_type(ai_response) == NORMAL_MESSAGE)
-        {
+        if(ai_response != NULL && judge_ai_message_type(ai_response) == NORMAL_MESSAGE){
             clean_ESP01S_message();
             break;
         }
@@ -98,19 +91,19 @@ void ai_cloud_control_task(void *task_params)
 
     // 与服务端通信
     uint8_t hearbeat_count = 0; // 心跳发送时机
-    while(1)
-    {
+    while(1){
         // 发送心跳包
-        if(++hearbeat_count > 6)
-        {
+        if(++hearbeat_count > 6){
             hearbeat_count = 0;
             printf("heartbeat\r\n");
             vTaskDelay(pdMS_TO_TICKS(2000)); // 最少2s
             char *ai_response = get_ESP01S_message();
-            if(ai_response != NULL && judge_ai_message_type(ai_response) == NORMAL_MESSAGE)
+            if(ai_response != NULL && judge_ai_message_type(ai_response) == NORMAL_MESSAGE){
                 clean_ESP01S_message();
-            else
+            }
+            else{
                 break; // 心跳包超时，退出循环
+            }
         }
 
         // 获取传感器数据
@@ -150,14 +143,11 @@ void local_edge_control_task(void *task_params)
     OLED_Clear(); // 清空OLED屏幕
     servo_window_off(); // 关闭窗户
 
-    while(1)
-    {
+    while(1){
         // 等待消息
-        if(xQueueReceive(cloud_status_queue_handle, &cloud_status_msg, 0) == pdPASS)
-        {
+        if(xQueueReceive(cloud_status_queue_handle, &cloud_status_msg, 0) == pdPASS){
             // 处理消息
-            switch(cloud_status_msg.status)
-            {
+            switch(cloud_status_msg.status){
                 case 0: // 云端断开连接
                     system_status_led_control(LED_OFF); // 系统运行状态指示灯熄灭
                     local_control_flag = 1;
@@ -170,42 +160,49 @@ void local_edge_control_task(void *task_params)
             OLED_Clear(); // 清空OLED屏幕
         }
 
-        if(local_control_flag == 0) // 云端控制+本地控制
-        {
-            // 刷新OLED屏幕
+        if(local_control_flag == 0){ // 云端控制+本地控制
             OLED_refresh("Cloud Control");
         }
-        else if(local_control_flag == 1) // 本地控制
-        {
-            // 刷新OLED屏幕
+        else if(local_control_flag == 1){  // 本地控制
             OLED_refresh("Local Control");
-
-            // 获取传感器数据
-            DHT_get_temp_humi_data(&sensor_data.humidity, &sensor_data.temperature);
-            sensor_data.smoke = get_MQ2_sensor_value();
-            sensor_data.co = get_MQ7_sensor_value();
-            sensor_data.light = get_light_sensor_value();
-
-            // 预警
-            if(sensor_data.temperature > 25 || sensor_data.smoke > 50 || sensor_data.co > 50) // 一级预警
-            {
-                servo_window_up();      // 打开窗户
-                motor_front_turn();     // 打开排风扇
-                close_all_alarm_led();  // 关闭所有警报灯
-                led_yellow_up();        // 亮黄灯
-                // buzzer_up();            // 打开警报
-            }
-            else if(sensor_data.temperature > 99 || sensor_data.smoke > 99 || sensor_data.co > 99) // 二级预警
-            {
-                servo_window_up();
-                motor_front_turn();
-                close_all_alarm_led();
-                led_red_up();
-                // buzzer_up();
-            }
         }
 
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        // 获取传感器数据
+        DHT_get_temp_humi_data(&sensor_data.humidity, &sensor_data.temperature);
+        sensor_data.smoke = get_MQ2_sensor_value();
+        sensor_data.co = get_MQ7_sensor_value();
+        sensor_data.light = get_light_sensor_value();
+
+        // 预警
+        if(sensor_data.temperature > 25 || sensor_data.smoke > 50 || sensor_data.co > 50){ // 一级预警
+            servo_window_up();      // 打开窗户
+            motor_front_turn();     // 打开排风扇
+            close_all_alarm_led();  // 关闭所有警报灯
+            led_yellow_up();        // 亮黄灯
+            // buzzer_up();            // 打开警报
+        }
+        else if(sensor_data.temperature > 99 || sensor_data.smoke > 99 || sensor_data.co > 99){ // 二级预警
+            servo_window_up();
+            motor_front_turn();
+            close_all_alarm_led();
+            led_red_up();
+            // buzzer_up();
+        }
+
+        // 语音识别
+        char *asr_response = get_ASRPRO_message();
+        if(asr_response != NULL){
+            // if(){
+            //     execute_command(const char *device_cmd); // 执行语音设备控制命令
+            // }
+            if(strcmp(asr_response, "请给我温湿度") == 0){
+                send_message_to_ASRPRO_string("3.14\n");
+                buzzer_up(); // 打开警报
+            }
+            clean_ASRPRO_message();
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(2000));
     }
 
     // vTaskDelete(NULL);  // 自毁任务
@@ -291,8 +288,7 @@ void vApplicationIdleHook(void)
 void vApplicationTickHook(void)
 {
     wdg_counter++;
-    if(wdg_counter >= 800) // 每 800 个节拍（0.8s）喂狗一次
-    {
+    if(wdg_counter >= 800){   // 每 800 个节拍（0.8s）喂狗一次
         IWDG_ReloadCounter(); // 重置独立看门狗计数器（喂狗）
         wdg_counter = 0;
     }

@@ -16,16 +16,13 @@ void buzzer_init(void)
 // 控制蜂鸣器状态
 void buzzer_control(BUZZER_STATUS state)
 {
-	if(state == BUZZER_ON)
-	{
+	if(state == BUZZER_ON){
 		GPIO_SetBits(GPIOA, GPIO_Pin_8);
 	}
-	else if(state == BUZZER_OFF)
-	{
+	else if(state == BUZZER_OFF){
 		GPIO_ResetBits(GPIOA, GPIO_Pin_8);
 	}
-	else
-	{
+	else{
 		GPIO_ResetBits(GPIOA, GPIO_Pin_8); // 默认关闭蜂鸣器
 	}
 }

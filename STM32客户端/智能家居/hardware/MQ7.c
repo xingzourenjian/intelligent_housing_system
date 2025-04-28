@@ -38,7 +38,7 @@ static void ADC_init(uint16_t GPIO_Pin, uint8_t ADC_Channel)
     while(ADC_GetCalibrationStatus(ADC1) == SET); // 等待校准完成
 
     ADC_SoftwareStartConvCmd(ADC1, ENABLE);
-    
+
     ADC_GetConversionValue(ADC1); // 丢掉首次采样不稳定值
 }
 
@@ -61,8 +61,7 @@ float get_MQ7_sensor_value(void)
 {
     uint16_t value = 0;
 
-    for(int i = 0; i < 5; i++)
-    {
+    for(int i = 0; i < 5; i++){
         value += get_ADC_value(ADC_Channel_8); // 获取ADC值 0-4095
         vTaskDelay(pdMS_TO_TICKS(2)); // 避免ADC采样不稳定
     }

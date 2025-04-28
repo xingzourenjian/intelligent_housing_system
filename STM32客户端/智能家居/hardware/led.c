@@ -12,7 +12,7 @@ static void PWM_init(void)
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 
 	GPIO_InitTypeDef GPIO_InitStructure;
- 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+ 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP; // 复用推挽输出模式
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 	GPIO_InitStructure.GPIO_Pin = ROOM_LED; // PB3
  	GPIO_Init(GPIOB, &GPIO_InitStructure);
@@ -33,10 +33,10 @@ static void PWM_init(void)
     // 输出比较通道
 	TIM_OCInitTypeDef TIM_OCInitStructure;
 	TIM_OCStructInit(&TIM_OCInitStructure); // 赋一个初始值，再更改想要的值，防止未知错误
-	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; // PWM模式1，CNT < CCR时输出有效电平
+	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; // 有效电平为高电平
 	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-	TIM_OCInitStructure.TIM_Pulse = 0; // CCR，占空比调节
+	TIM_OCInitStructure.TIM_Pulse = 100; // CCR，占空比调节 高电平，卧室灯灭
 	TIM_OC2Init(TIM2, &TIM_OCInitStructure);
 
 	TIM_Cmd(TIM2, ENABLE);
@@ -53,19 +53,26 @@ void room_lamp_init(void)
     PWM_init();
 }
 
-void room_lamp_adjust(uint16_t adjust_value)
+void room_lamp_adjust(int adjust_value)
 {
-    PWM_set_compare2(-adjust_value);
+	if(adjust_value > 100){
+		adjust_value = 100; // 限制范围0~100
+	}
+	if(adjust_value < 0){
+		adjust_value = 0;
+	}
+
+    PWM_set_compare2(LED_ARR - adjust_value);
 }
 
 void room_lamp_up(void)
 {
-    PWM_set_compare2(0);
+    room_lamp_adjust(0);
 }
 
 void room_lamp_off(void)
 {
-    PWM_set_compare2(100);
+    room_lamp_adjust(100);
 }
 
 // PA11 PA12 PA15   LED6 LED7 LED8
@@ -97,10 +104,12 @@ void led_init(void)
 // PC13 系统运行状态指示灯
 void system_status_led_control(LED_STATUS state)
 {
-	if(state == LED_ON)
+	if(state == LED_ON){
 		GPIO_ResetBits(GPIOC, SYSTEM_LED);
-	else if(state == LED_OFF)
+	}
+	else if(state == LED_OFF){
 		GPIO_SetBits(GPIOC, SYSTEM_LED);
+	}
 }
 
 void system_status_led_up(void)
@@ -115,10 +124,12 @@ void system_status_led_down(void)
 
 void led_control(uint16_t LED_num, LED_STATUS state)
 {
-	if(state == LED_ON)
+	if(state == LED_ON){
 		GPIO_ResetBits(GPIOA, LED_num);
-	else if(state == LED_OFF)
+	}
+	else if(state == LED_OFF){
 		GPIO_SetBits(GPIOA, LED_num);
+	}
 }
 
 void led_up(uint16_t LED_num)
@@ -133,12 +144,10 @@ void led_off(uint16_t LED_num)
 
 void led_flip(uint16_t LED_num)
 {
-    if(GPIO_ReadInputDataBit(GPIOA, LED_num) == 0)
-	{
+    if(GPIO_ReadInputDataBit(GPIOA, LED_num) == 0){
 		GPIO_SetBits(GPIOA, LED_num);
 	}
-	else
-	{
+	else{
 		GPIO_ResetBits(GPIOA, LED_num);
 	}
 }

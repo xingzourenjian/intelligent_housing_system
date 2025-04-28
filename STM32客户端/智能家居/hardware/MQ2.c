@@ -61,8 +61,7 @@ float get_MQ2_sensor_value(void)
 {
     uint16_t value = 0;
 
-    for(int i = 0; i < 5; i++)
-    {
+    for(int i = 0; i < 5; i++){
         value += get_ADC_value(ADC_Channel_4); // 获取ADC值 0-4095
         vTaskDelay(pdMS_TO_TICKS(2)); // 避免ADC采样不稳定
     }

@@ -52,8 +52,7 @@ static uint8_t DHT_start_signal(void)
 	delay_us(20);                           // 延时等待20-40us后, 读取DHT11的响应信号
 
     // 等待应答
-	if(!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1))         // 判断DHT11是否进入应答模式
-	{
+	if(!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1)){ 		  // 判断DHT11是否进入应答模式
 		while(!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1)); // DHT11 发送80us低电平响应信号
         while(GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1));  // DHT11 再把总线拉高80us, 准备发送数据
 		return 1; // 返回1表示应答成功
@@ -74,8 +73,7 @@ static uint8_t DHT_get_byte_data(void)
 	uint8_t temp;
 
     // 每一bit数据都以50us低电平开始,高电平的长短决定了数据位是0 (26-28us) 还是 1 (70us)
-	for(int i = 0; i < 8; i++)
-	{
+	for(int i = 0; i < 8; i++){
 		temp <<= 1; // 高位先出
 		while(!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1)); // 主机等待50~58μs的低电平结束
 		delay_us(28);  // 等待26-28μs的高电平结束
@@ -101,8 +99,7 @@ uint8_t DHT_get_temp_humi_data(float *humidity, float *temperature)
 
     // 从模式下,DHT11接收到开始信号触发一次温湿度采集
     // 湿度整数(8bit) 湿度小数(8bit) 温度整数(8bit) 温度小数(8bit) 校验和(8bit)，高位先出
-	if(DHT_start_signal()) // if判断DHT11从机是否应答
-	{
+	if(DHT_start_signal()){ // if判断DHT11从机是否应答
 		data_buffer[0] = DHT_get_byte_data();  // 湿度的整数，十进制
 		data_buffer[1] = DHT_get_byte_data();  // 湿度的小数
 		data_buffer[2] = DHT_get_byte_data();  // 温度的整数
@@ -110,21 +107,26 @@ uint8_t DHT_get_temp_humi_data(float *humidity, float *temperature)
 		data_buffer[4] = DHT_get_byte_data();  // 校验数据
 
 		// 湿度数据
-		if(data_buffer[1] < 10)
+		if(data_buffer[1] < 10){
 			*humidity = data_buffer[0] + data_buffer[1] * 0.1;
-		else if(data_buffer[1] >= 10)
+		}
+		else if(data_buffer[1] >= 10){
 			*humidity = data_buffer[0] + data_buffer[1] * 0.01;
+		}
 
 		// 温度数据
-		if(data_buffer[3] < 10)
+		if(data_buffer[3] < 10){
 			*temperature = data_buffer[2] + data_buffer[3] * 0.1;
-		else if(data_buffer[3] >= 10)
+		}
+		else if(data_buffer[3] >= 10){
 			*temperature = data_buffer[2] + data_buffer[3] * 0.01;
+		}
 
 		return (data_buffer[0]+data_buffer[1]+data_buffer[2]+data_buffer[3] == data_buffer[4]) ? 1 : 0; // 校验数据是否传输正确
 	}
-	else
+	else{
 		return 0; // DHT11从机没有应答
+	}
 }
 
 void show_DHT_sensor_value_OLED(uint8_t line, uint8_t column)

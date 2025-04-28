@@ -22,7 +22,7 @@ typedef enum
 
 void room_lamp_init(void);
 
-void room_lamp_adjust(uint16_t adjust_value);
+void room_lamp_adjust(int adjust_value);
 
 void room_lamp_up(void);
 

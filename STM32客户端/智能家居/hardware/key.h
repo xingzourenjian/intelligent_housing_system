@@ -5,9 +5,8 @@
 #include "delay.h"
 #include "led.h"
 #include "buzzer.h"
+#include "main.h"
 
 void key_init(void);
-
-void EXTI9_5_IRQHandler(void);
 
 #endif

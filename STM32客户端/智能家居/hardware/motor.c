@@ -62,14 +62,12 @@ void motor_init(void)
 
 void motor_set_speed(int8_t speed)
 {
-	if(speed >= 0)
-    {
+	if(speed >= 0){
 		GPIO_SetBits(GPIOB, AIN1);   // AIN1=1, AIN2=0, 正转
 		GPIO_ResetBits(GPIOB, AIN2);
 		PWM_set_compare4(speed);
 	}
-	else
-    {
+	else{
 		GPIO_ResetBits(GPIOB, AIN1);  // AIN1=0, AIN2=1, 反转
 		GPIO_SetBits(GPIOB, AIN2);
 		PWM_set_compare4(-speed);

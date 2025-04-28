@@ -85,21 +85,20 @@ static void UART3_send_byte(char byte)
 static void UART3_send_string(char *string)
 {
 	uint8_t i = 0;
-	for(i = 0; string[i] != '\0'; i++)
-		UART3_send_byte(string[i]);
+	for(i = 0; string[i] != '\0'; i++){
+        UART3_send_byte(string[i]);
+    }
 }
 
 // static void UART3_send_number(uint32_t number)
 // {
 // 	uint32_t i = 0;
-// 	while(number)
-//     {
+// 	while(number){
 // 		i = i * 10 + number % 10;
 // 		number /= 10;
 // 	}
 // 	number = i;			// number变为自身的回文数
-// 	do
-//     {
+// 	do{
 // 		UART3_send_byte(number % 10 + '0');
 // 		// 发送末位,即原数字的首位。加上'0'得以转化为ASCLL码，文本显示为数字
 // 		number /= 10;	// 丢弃末位
@@ -130,30 +129,27 @@ int fputc(int ch, FILE *f)
 
 void USART3_IRQHandler(void)
 {
-	if(USART_GetITStatus(USART3, USART_IT_RXNE) == SET)
-    {
+	if(USART_GetITStatus(USART3, USART_IT_RXNE) == SET){
 		uint8_t rx_data = USART_ReceiveData(USART3);
 
-        if(receive_mode == 1)
-        {
+        if(receive_mode == 1){
             TIM_SetCounter(TIM2, 0); // 重新计数
             TIM_Cmd(TIM2, ENABLE);
 
-            if(p_UART3_rx_packet < UART3_MAX_RECV_LEN - 1) // 字符串后面是结束符，防止溢出
+            if(p_UART3_rx_packet < UART3_MAX_RECV_LEN - 1){ // 字符串后面是结束符，防止溢出
                 UART3_rx_packet[p_UART3_rx_packet++] = rx_data;
-        }
-        else if(receive_mode == 2)
-        {
-            if(p_UART3_rx_packet < UART3_MAX_RECV_LEN - 1)
-            {
-                UART3_rx_packet[p_UART3_rx_packet++] = rx_data;
-                if(p_UART3_rx_packet >= 2)
-                    if(UART3_rx_packet[p_UART3_rx_packet-2] == '\r' && UART3_rx_packet[p_UART3_rx_packet-1] == '\n')
-                        UART3_rx_flag = 1;
             }
         }
-
-
+        else if(receive_mode == 2){
+            if(p_UART3_rx_packet < UART3_MAX_RECV_LEN - 1){
+                UART3_rx_packet[p_UART3_rx_packet++] = rx_data;
+                if(p_UART3_rx_packet >= 2){
+                    if(UART3_rx_packet[p_UART3_rx_packet-2] == '\r' && UART3_rx_packet[p_UART3_rx_packet-1] == '\n'){
+                        UART3_rx_flag = 1;
+                    }
+                }
+            }
+        }
 
     	USART_ClearITPendingBit(USART3, USART_IT_RXNE);
     }
@@ -218,20 +214,24 @@ uint8_t send_cmd_to_ESP01S(char *cmd, uint32_t ms)
     UART3_send_string(cmd);
     vTaskDelay(pdMS_TO_TICKS(ms));
 
-    if(strstr(UART3_rx_packet, "OK")) // ESP01S回复OK了
+    if(strstr(UART3_rx_packet, "OK")){ // ESP01S回复OK了
         ret_flag = 1;
-    else if(strstr(UART3_rx_packet, "ERROR")) // ESP01S回复ERROR了
+    }
+    else if(strstr(UART3_rx_packet, "ERROR")){ // ESP01S回复ERROR了
         ret_flag = 0;
-    else
+    }
+    else{
         ret_flag = 0;
+    }
 
     return ret_flag;
 }
 
 char *get_ESP01S_message(void)
 {
-    if(UART3_rx_flag == 1)
+    if(UART3_rx_flag == 1){
         return UART3_rx_packet;
+    }
 
     return NULL; // 没有接收到数据，返回NULL
 }
@@ -245,8 +245,9 @@ void clean_ESP01S_message(void)
 int judge_ai_message_type(char *ai_response)
 {
     char *p = strstr(ai_response, "code"); // 检查 code 是否存在
-    if(!p)
+    if(!p){
         return 0;
+    }
 
     p = strchr(p, ':'); // 定位到 "code": 冒号
 
@@ -268,8 +269,9 @@ static uint8_t get_action_and_message(char *ai_response, char device_cmd[MAX_CMD
     memset(device_cmd, 0, MAX_CMD_COUNT * MAX_CMD_LEN);
 
     char *p = strstr(ai_response, "code"); // 检查 code 是否存在
-    if(!p)
+    if(!p){
         return cmd_count;
+    }
 
     p = strchr(p, ':'); // 定位到 "code": 冒号
 
@@ -282,19 +284,17 @@ static uint8_t get_action_and_message(char *ai_response, char device_cmd[MAX_CMD
     sscanf(p, "%d", &code); // 获取 code 的值
 
     // 提取设备控制指令
-    if(code == 23) // 仅当code=23时解析action
-    {
+    if(code == 23){ // 仅当code=23时解析action
         p = strstr(p, "action"); // 检查 action 是否存在
-        if(p)
-        {
+        if(p){
             p = strchr(p, '{'); // 定位到 action 对象起始位置，即指向 '{'
             char *p_end = strchr(p, '}'); // 定位到 action 对象结束位置，即指向 '}'
-            while(cmd_count < MAX_CMD_COUNT)
-            {
+            while(cmd_count < MAX_CMD_COUNT){
                 // 跳过键
                 p = strchr(p, ':'); // 定位到键后面的冒号
-                if(p > p_end)
+                if(p > p_end){
                     break;
+                }
 
                 p = strchr(p, '\"'); // 定位到值的起始引号
 
@@ -311,8 +311,7 @@ static uint8_t get_action_and_message(char *ai_response, char device_cmd[MAX_CMD
 
     // // 提取消息内容
     // p = strstr(ai_response, "message");
-    // if(p)
-    // {
+    // if(p){
     //     p = strchr(p, ':'); // 定位到键后面的冒号
 
     //     p = strchr(p, '\"'); // 定位到值的起始引号
@@ -334,16 +333,18 @@ uint8_t execute_command(const char *device_cmd)
 {
     int cmd_map_table_len = get_cmd_map_table_len(); // 获取命令映射表大小
 
-    if(cmd_map_table_len <= 0) // 映射表为空
+    if(cmd_map_table_len <= 0){ // 映射表为空
         return 0;
+    }
 
     // 遍历映射表查找匹配命令
-    for(int i = 0; i < cmd_map_table_len; i++)
-        if(strcmp(device_cmd, cmd_map_table[i].cmd) == 0)
-        {
+    for(int i = 0; i < cmd_map_table_len; i++){
+        if(strcmp(device_cmd, cmd_map_table[i].cmd) == 0){
             cmd_map_table[i].func(); // 调用对应函数
             return 1;
         }
+    }
+
     return 0; // 未找到匹配命令
 }
 
@@ -358,8 +359,9 @@ uint8_t process_ai_device_control_cmd(char *ai_response)
     cmd_count = get_action_and_message(ai_response, device_cmd);
 
     // 执行设备控制命令
-    for(uint8_t i = 0; i < cmd_count; i++)
+    for(uint8_t i = 0; i < cmd_count; i++){
         exec_flag = execute_command(device_cmd[i]); // 执行设备控制命令
+    }
 
     return exec_flag; // 返回执行命令结果
 }

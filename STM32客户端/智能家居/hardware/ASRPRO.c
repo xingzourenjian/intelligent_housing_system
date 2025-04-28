@@ -52,21 +52,20 @@ static void UART1_send_byte(char byte)
 static void UART1_send_string(char *string)
 {
 	uint8_t i = 0;
-	for(i = 0; string[i] != '\0'; i++)
+	for(i = 0; string[i] != '\0'; i++){
 		UART1_send_byte(string[i]);
+	}
 }
 
 static void UART1_send_number(uint32_t number)
 {
 	uint32_t i = 0;
-	while(number)
-    {
+	while(number){
 		i = i * 10 + number % 10;
 		number /= 10;
 	}
 	number = i;			// number变为自身的回文数
-	do
-    {
+	do{
 		UART1_send_byte(number % 10 + '0');
 		// 发送末位,即原数字的首位。加上'0'得以转化为ASCLL码，文本显示为数字
 		number /= 10;	// 丢弃末位
@@ -84,25 +83,26 @@ void USART1_IRQHandler(void)
     static uint8_t rx_state = 0;
 	static uint8_t p_rx_packet = 0;
 
-	if(USART_GetITStatus(USART1, USART_IT_RXNE) == SET)
-    {
-		uint8_t rx_data = USART_ReceiveData(USART1);
+	if(USART_GetITStatus(USART1, USART_IT_RXNE) == SET){
+		uint8_t rx_data = USART_ReceiveData(USART1);send_message_to_blue_string(&rx_data); // 调试用
 
-		if(rx_state == 0) // 等待接收
-			if(rx_data == '@')
+		if(rx_state == 0){ // 等待接收
+			if(rx_data == '@'){
 				rx_state = 1;
-		else if(rx_state == 1) // 开始接收
-        {
-			if(rx_data == '#') // 结束接收
-            {
+			}
+		}
+		else if(rx_state == 1){ // 开始接收
+			if(rx_data == '#'){ // 结束接收
 				UART1_rx_packet[p_rx_packet] = '\0';
 				UART1_rx_flag = 1;
 				rx_state = 0;
 				p_rx_packet = 0;
 			}
-			else // 接收中
-				if(p_rx_packet < UART1_MAX_RECV_LEN - 1) // 防止溢出
+			else{ // 接收中
+				if(p_rx_packet < UART1_MAX_RECV_LEN - 1){ // 防止溢出
 					UART1_rx_packet[p_rx_packet++] = rx_data;
+				}
+			}
 		}
 
     	USART_ClearITPendingBit(USART1, USART_IT_RXNE);
@@ -128,8 +128,9 @@ void send_message_to_ASRPRO_num(uint32_t number)
 
 char *get_ASRPRO_message(void)
 {
-    if(UART1_rx_flag == 1)
-        return (char *)UART1_rx_packet;
+    if(UART1_rx_flag == 1){
+		return (char *)UART1_rx_packet;
+	}
     return NULL;
 }
 
