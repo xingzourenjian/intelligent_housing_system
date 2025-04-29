@@ -67,12 +67,12 @@ void room_lamp_adjust(int adjust_value)
 
 void room_lamp_up(void)
 {
-    room_lamp_adjust(0);
+    room_lamp_adjust(100);
 }
 
 void room_lamp_off(void)
 {
-    room_lamp_adjust(100);
+    room_lamp_adjust(0);
 }
 
 // PA11 PA12 PA15   LED6 LED7 LED8

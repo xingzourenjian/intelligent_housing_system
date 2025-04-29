@@ -1,10 +1,15 @@
 *** Using Compiler 'V5.06 update 7 (build 960)', folder: 'D:\work\Keil_v5\Arm\ARMCC\Bin'
 Build target '���ܼҾ�'
-linking...
-.\Objects\project.axf: Error: L6218E: Undefined symbol send_cmd_to_blue (referred from esp01s.o).
-Not enough information to list image symbols.
-Not enough information to list load addresses in the image map.
-Finished: 2 information, 0 warning and 1 error messages.
-".\Objects\project.axf" - 1 Error(s), 0 Warning(s).
+compiling key.c...
+.\hardware\ASRPRO.h(22): error:  #20: identifier "sensor_data_node" is undefined
+  void process_ASRPRO_message(char *asr_response, sensor_data_node sensor_data);
+hardware\key.c: 0 warnings, 1 error
+compiling main.c...
+.\hardware\ASRPRO.h(22): error:  #20: identifier "sensor_data_node" is undefined
+  void process_ASRPRO_message(char *asr_response, sensor_data_node sensor_data);
+user\main.c(116): warning:  #870-D: invalid multibyte character sequence
+          printf("温度:%.1f, 湿度:%.1f, 烟雾:%.1f, 一氧化�?:%.1f, 光照:%.1f\r\n",
+user\main.c: 1 warning, 1 error
+".\Objects\project.axf" - 2 Error(s), 1 Warning(s).
 Target not created.
-Build Time Elapsed:  00:00:00
+Build Time Elapsed:  00:00:01

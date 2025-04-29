@@ -192,13 +192,9 @@ void local_edge_control_task(void *task_params)
         // 语音识别
         char *asr_response = get_ASRPRO_message();
         if(asr_response != NULL){
-            // if(){
-            //     execute_command(const char *device_cmd); // 执行语音设备控制命令
-            // }
-            if(strcmp(asr_response, "请给我温湿度") == 0){
-                send_message_to_ASRPRO_string("3.14\n");
-                buzzer_up(); // 打开警报
-            }
+            // 处理语音识别消息
+            process_ASRPRO_message(asr_response, sensor_data.temperature, sensor_data.humidity, sensor_data.smoke, sensor_data.co);
+            // 语音识别消息处理完成，清空消息
             clean_ASRPRO_message();
         }
 
@@ -238,7 +234,7 @@ void system_init(void)
 }
 
 // 娱乐模式函数
-void recreation_mode(sensor_data_node *sensor_data)
+void recreation_mode(void)
 {
     room_lamp_adjust(10); // 调节卧室灯
     // 拉上窗帘

@@ -9,8 +9,8 @@ device_cmd_node cmd_map_table[] =
     {"window_off", servo_window_off},       // 关闭窗户
     {"fans_up", motor_front_turn},          // 打开排风扇
     {"fans_off", motor_no_turn},            // 关闭排风扇
-    {"room_lamp_up", room_lamp_up},          // 打开卧室灯
-    {"room_lamp_off", room_lamp_off},        // 关闭卧室灯
+    {"room_lamp_up", room_lamp_up},         // 打开卧室灯
+    {"room_lamp_off", room_lamp_off},       // 关闭卧室灯
     {"yellow_light_up", led_yellow_up},     // 打开黄灯
     {"yellow_light_off", led_yellow_off},   // 关闭黄灯
     {"red_light_up", led_red_up},           // 打开红灯

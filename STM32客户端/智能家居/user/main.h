@@ -36,7 +36,7 @@
 #include "ASRPRO.h"
 
 // 传感器数据节点
-typedef struct
+typedef struct sensor_data_node
 {
     float temperature;
     float humidity;
@@ -67,7 +67,7 @@ void local_edge_control_task(void *task_params);
 
 void system_init(void);
 
-void recreation_mode(sensor_data_node *sensor_data); // 娱乐模式函数
+void recreation_mode(void); // 娱乐模式函数
 
 void awary_mode(void); // 离家模式函数
 

@@ -66,8 +66,7 @@ static void UART2_send_number(uint32_t number)
 	}
 	number = i;			// number变为自身的回文数
 	do{
-		UART2_send_byte(number % 10 + '0');
-		// 发送末位,即原数字的首位。加上'0'得以转化为ASCLL码，文本显示为数字
+		UART2_send_byte(number % 10 + '0'); // 发送末位,即原数字的首位。加上'0'得以转化为ASCLL码，文本显示为数字
 		number /= 10;	// 丢弃末位
 	}while(number);
 }

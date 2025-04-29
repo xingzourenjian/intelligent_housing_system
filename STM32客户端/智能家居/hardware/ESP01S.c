@@ -99,8 +99,7 @@ static void UART3_send_string(char *string)
 // 	}
 // 	number = i;			// number变为自身的回文数
 // 	do{
-// 		UART3_send_byte(number % 10 + '0');
-// 		// 发送末位,即原数字的首位。加上'0'得以转化为ASCLL码，文本显示为数字
+// 		UART3_send_byte(number % 10 + '0'); // 发送末位,即原数字的首位。加上'0'得以转化为ASCLL码，文本显示为数字
 // 		number /= 10;	// 丢弃末位
 // 	}while(number);
 // }

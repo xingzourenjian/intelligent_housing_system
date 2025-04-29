@@ -57,20 +57,19 @@ static void UART1_send_string(char *string)
 	}
 }
 
-static void UART1_send_number(uint32_t number)
-{
-	uint32_t i = 0;
-	while(number){
-		i = i * 10 + number % 10;
-		number /= 10;
-	}
-	number = i;			// number变为自身的回文数
-	do{
-		UART1_send_byte(number % 10 + '0');
-		// 发送末位,即原数字的首位。加上'0'得以转化为ASCLL码，文本显示为数字
-		number /= 10;	// 丢弃末位
-	}while(number);
-}
+// static void UART1_send_number(uint32_t number)
+// {
+// 	uint32_t i = 0;
+// 	while(number){
+// 		i = i * 10 + number % 10;
+// 		number /= 10;
+// 	}
+// 	number = i;			// number变为自身的回文数
+// 	do{
+// 		UART1_send_byte(number % 10 + '0'); // 发送末位,即原数字的首位。加上'0'得以转化为ASCLL码，文本显示为数字
+// 		number /= 10;	// 丢弃末位
+// 	}while(number);
+// }
 
 static void clean_UART1_rx_packet(void)
 {
@@ -84,7 +83,7 @@ void USART1_IRQHandler(void)
 	static uint8_t p_rx_packet = 0;
 
 	if(USART_GetITStatus(USART1, USART_IT_RXNE) == SET){
-		uint8_t rx_data = USART_ReceiveData(USART1);send_message_to_blue_string(&rx_data); // 调试用
+		uint8_t rx_data = USART_ReceiveData(USART1);
 
 		if(rx_state == 0){ // 等待接收
 			if(rx_data == '@'){
@@ -121,11 +120,6 @@ void send_message_to_ASRPRO_string(char *str)
     UART1_send_string(str);
 }
 
-void send_message_to_ASRPRO_num(uint32_t number)
-{
-	UART1_send_number(number);
-}
-
 char *get_ASRPRO_message(void)
 {
     if(UART1_rx_flag == 1){
@@ -137,4 +131,85 @@ char *get_ASRPRO_message(void)
 void clean_ASRPRO_message(void)
 {
 	clean_UART1_rx_packet();
+}
+
+// 获取语音识别码
+static uint8_t get_voice_code(char *asr_response)
+{
+	uint8_t asr_code = 0; // 语音识别码
+
+	while(*asr_response != '\0'){
+		if(*asr_response >= '0' && *asr_response <= '9'){
+			asr_code = (asr_code * 10) + (*asr_response - '0'); // 语音识别码
+		}
+		asr_response++;
+	}
+
+	return asr_code;
+}
+
+void process_ASRPRO_message(char *asr_response, float temperature, float humidity, float smoke, float co)
+{
+	if(asr_response == NULL){
+		return;
+	}
+
+	char send_buffer[9] = {0};
+	uint8_t asr_code = 0; // 语音识别码
+
+	asr_code = get_voice_code(asr_response); // 获取语音识别码
+	switch(asr_code){
+		case 1: // 获取温湿度
+			sprintf(send_buffer, "%.1f\n", temperature);
+			send_message_to_ASRPRO_string(send_buffer);
+			sprintf(send_buffer, "%.1f\n", humidity);
+			send_message_to_ASRPRO_string(send_buffer);
+			break;
+		case 2: // 获取烟雾浓度
+			sprintf(send_buffer, "%.1f\n", smoke);
+			send_message_to_ASRPRO_string(send_buffer);
+			break;
+		case 3: // 获取一氧化碳浓度
+			sprintf(send_buffer, "%.1f\n", co);
+			send_message_to_ASRPRO_string(send_buffer);
+			break;
+		case 4: // 打开窗户
+			send_message_to_ASRPRO_string("4\n");
+			servo_window_up();
+			break;
+		case 5: // 关闭窗户
+			send_message_to_ASRPRO_string("5\n");
+			servo_window_off();
+			break;
+		case 6: // 打开排风扇
+			send_message_to_ASRPRO_string("6\n");
+			motor_front_turn();
+			break;
+		case 7: // 关闭排风扇
+			send_message_to_ASRPRO_string("7\n");
+			motor_no_turn();
+			break;
+		case 8: // 打开卧室灯
+			send_message_to_ASRPRO_string("8\n");
+			room_lamp_up();
+			break;
+		case 9: // 关闭卧室灯
+			send_message_to_ASRPRO_string("9\n");
+			room_lamp_off();
+			break;
+		case 10: // 启动娱乐模式
+			send_message_to_ASRPRO_string("10\n");
+			recreation_mode();
+			break;
+		case 11: // 启动睡眠模式
+			send_message_to_ASRPRO_string("11\n");
+			sleep_mode();
+			break;
+		case 12: // 启动离家模式
+			send_message_to_ASRPRO_string("12\n");
+			awary_mode();
+			break;
+		default:
+			break;
+	}
 }
