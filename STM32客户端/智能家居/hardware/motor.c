@@ -17,12 +17,13 @@ static void PWM_init(void)
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
  	GPIO_Init(GPIOB, &GPIO_InitStructure);
 
+	// 初始化时基单元
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
-	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1; // 输入信号采样分频器，不影响定时、PWM、输出比较
+	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1; // 72MHz
 	TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
-	TIM_TimeBaseInitStructure.TIM_Period = 100 - 1;    		// ARR，范围0~65535
-	TIM_TimeBaseInitStructure.TIM_Prescaler = 36 - 1;  		// PSC
-	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0; 	// 重复计数器，高级定时器才有
+	TIM_TimeBaseInitStructure.TIM_Period = 20000 - 1;    // ARR，范围0~65535
+	TIM_TimeBaseInitStructure.TIM_Prescaler = 72 - 1;  // PSC 时钟分频到 ​1MHz，使得每1个计数周期对应​1us
+	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0; // 重复计数器
 	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseInitStructure);
 
 	TIM_OCInitTypeDef TIM_OCInitStructure;
@@ -38,12 +39,20 @@ static void PWM_init(void)
 
 static void PWM_set_compare4(uint16_t compare)
 {
-	TIM_SetCompare4(TIM4, compare); // 用于更改通道4的CCR的值
+	// 约束范围
+	if(compare < 0){
+		compare = 0;
+	}
+	else if(compare > 100){
+		compare = 100;
+	}
+
+	TIM_SetCompare4(TIM4, compare * 20000 / 100); // 用于更改通道4的CCR的值
 }
 
 // PB4 AIN1
 // PB5 AIN2
-// PB9 PWMA
+// PB9 PWMA TIM4_CH4
 void motor_init(void)
 {
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);

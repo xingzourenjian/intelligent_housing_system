@@ -10,7 +10,7 @@ uint8_t UART3_rx_flag = 0; // 接收标志位
 // 定时1s
 static void timer_init(void)
 {
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
 
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
 	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
@@ -18,22 +18,20 @@ static void timer_init(void)
 	TIM_TimeBaseInitStructure.TIM_Period = 10000 - 1;    // ARR，范围0~65535 自动重装器
 	TIM_TimeBaseInitStructure.TIM_Prescaler = 7200 - 1;  // PSC 预分频器 时钟分频到 ​10kHz，使得每1个计数周期对应​0.1ms
 	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0; // 重复计数器，高级定时器才有
-	TIM_TimeBaseInit(TIM2, &TIM_TimeBaseInitStructure);
+	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseInitStructure);
 
-	TIM_ClearFlag(TIM2, TIM_FLAG_Update);
+	TIM_ClearFlag(TIM3, TIM_FLAG_Update);
 	// 复位后，TIM_TimeBaseInit函数会产生更新事件，而更新中断也会同步产生并置位，需手动清除中断标志位
-	TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
-
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+	TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);
 
 	NVIC_InitTypeDef NVIC_InitStructure;
-	NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
 	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
 	NVIC_Init(&NVIC_InitStructure);
 
-	TIM_Cmd(TIM2, DISABLE); // 关闭定时器
+	TIM_Cmd(TIM3, DISABLE); // 关闭定时器
 }
 
 // PB10  UART3_TX
@@ -65,7 +63,6 @@ static void UART3_init(void)
 
 	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);
 
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
 	NVIC_InitTypeDef NVIC_InitStructure;
 	NVIC_InitStructure.NVIC_IRQChannel = USART3_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
@@ -132,8 +129,8 @@ void USART3_IRQHandler(void)
 		uint8_t rx_data = USART_ReceiveData(USART3);
 
         if(receive_mode == 1){
-            TIM_SetCounter(TIM2, 0); // 重新计数
-            TIM_Cmd(TIM2, ENABLE);
+            TIM_SetCounter(TIM3, 0); // 重新计数
+            TIM_Cmd(TIM3, ENABLE);
 
             if(p_UART3_rx_packet < UART3_MAX_RECV_LEN - 1){ // 字符串后面是结束符，防止溢出
                 UART3_rx_packet[p_UART3_rx_packet++] = rx_data;
@@ -154,15 +151,15 @@ void USART3_IRQHandler(void)
     }
 }
 
-void TIM2_IRQHandler(void)
+void TIM3_IRQHandler(void)
 {
-	if(TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
+	if(TIM_GetITStatus(TIM3, TIM_IT_Update) == SET)
     {
 	    //等待时间超过1s
         UART3_rx_flag = 1;
 
-		TIM_Cmd(TIM2, DISABLE); //接收数据结束，停止计时
-		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+		TIM_Cmd(TIM3, DISABLE); //接收数据结束，停止计时
+		TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
 	}
 }
 

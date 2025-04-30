@@ -9,10 +9,10 @@
 #define LED_PSC 720 // PWM的PSC值，范围0~65535
 
 #define GREEN_LED    GPIO_Pin_11    // PA11
-#define YELLOW_LED  GPIO_Pin_12     // PA12
-#define RED_LED     GPIO_Pin_15     // PA15
-#define ROOM_LED  GPIO_Pin_3        // PB3  卧室灯
-#define SYSTEM_LED  GPIO_Pin_13     // PC13 系统运行状态指示灯
+#define YELLOW_LED   GPIO_Pin_12    // PA12
+#define RED_LED      GPIO_Pin_15    // PA15
+#define ROOM_LED     GPIO_Pin_3     // PB3  卧室灯
+#define SYSTEM_LED   GPIO_Pin_13    // PC13 系统运行状态指示灯
 
 typedef enum
 {

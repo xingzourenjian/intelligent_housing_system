@@ -36,7 +36,7 @@ static void PWM_init(void)
 	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; // PWM模式1，CNT < CCR时输出有效电平
 	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; // 有效电平为高电平
 	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-	TIM_OCInitStructure.TIM_Pulse = 100; // CCR，占空比调节 高电平，卧室灯灭
+	TIM_OCInitStructure.TIM_Pulse = LED_ARR; // CCR，占空比调节 高电平，卧室灯灭
 	TIM_OC2Init(TIM2, &TIM_OCInitStructure);
 
 	TIM_Cmd(TIM2, ENABLE);

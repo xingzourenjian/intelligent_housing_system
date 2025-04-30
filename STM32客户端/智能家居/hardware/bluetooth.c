@@ -32,7 +32,6 @@ static void UART2_init(void)
 
 	USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
 
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
 	NVIC_InitTypeDef NVIC_InitStructure;
 	NVIC_InitStructure.NVIC_IRQChannel = USART2_IRQn;
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;

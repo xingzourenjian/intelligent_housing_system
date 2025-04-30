@@ -22,7 +22,7 @@ static void PWM_init(void)
 	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1; // 72MHz
 	TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
 	TIM_TimeBaseInitStructure.TIM_Period = 20000 - 1;    // ARR，范围0~65535
-	TIM_TimeBaseInitStructure.TIM_Prescaler = 72 - 1;  // PSC
+	TIM_TimeBaseInitStructure.TIM_Prescaler = 72 - 1;  // PSC 时钟分频到 ​1MHz，使得每1个计数周期对应​1us
 	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0; // 重复计数器
 	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseInitStructure);
 
@@ -44,7 +44,7 @@ static void PWM_set_compare3(uint16_t compare)
 	TIM_SetCompare3(TIM4, compare);
 }
 
-// PB8 TIM4_CH3 舵机
+// PB8 TIM4_CH3 舵机(PWM频率：50Hz，即20ms   角度占空比：0.5ms-1ms-1.5ms-2ms-2.5ms，即0°~180°)
 void servo_init(void)
 {
     PWM_init();
@@ -53,15 +53,23 @@ void servo_init(void)
 // 设置转向角度限制180°
 void servo_set_angle(float angle)
 {
-    PWM_set_compare3(angle / 180 * 2000 + 500);
+	// 约束角度范围
+	if(angle < 0){
+		angle = 0;
+	}
+	else if(angle > 180){
+		angle = 180;
+	}
+
+    PWM_set_compare3((2500-500) / (180-0) * angle + 500); // 500/20000*20ms = 0.5ms
 }
 
 void servo_window_up(void)
 {
-	servo_set_angle(120); // 打开窗户
+	servo_set_angle(150); // 打开窗户
 }
 
 void servo_window_off(void)
 {
-	servo_set_angle(30); // 关闭窗户
+	servo_set_angle(0); // 关闭窗户
 }

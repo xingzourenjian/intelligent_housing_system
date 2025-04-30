@@ -19,9 +19,9 @@ int main(int argc, const char *argv[])
     cloud_status_queue_handle = xQueueCreate(5, sizeof(cloud_status_node));
 
     // 创建任务
-    // xTaskCreate(ai_cloud_control_task, "ai_cloud_control_task", 1024, NULL, 2, &cloud_task_handle); // 堆栈n字
+    xTaskCreate(ai_cloud_control_task, "ai_cloud_control_task", 1024, NULL, 2, &cloud_task_handle); // 堆栈n字
     xTaskCreate(local_edge_control_task, "local_edge_control_task", 1024, NULL, 3, &edge_task_handle);
-    // xTaskCreate(monitor_task, "monitor_task", 1024, NULL, 4, &monitor_task_handle); // 创建监控任务
+    xTaskCreate(monitor_task, "monitor_task", 1024, NULL, 4, &monitor_task_handle); // 创建监控任务
 
     // 启动调度器
     vTaskStartScheduler();
@@ -35,17 +35,29 @@ int main(int argc, const char *argv[])
 // 监控任务
 void monitor_task(void *task_params)
 {
+    cloud_status_node cloud_status_msg; // 云端连接状态节点
+
+    memset(&cloud_status_msg, 0, sizeof(cloud_status_node));
+
     while(1){
+        // 判断云端连接状态
+        if(xQueueReceive(cloud_status_queue_handle, &cloud_status_msg, 0) == pdPASS){
+            if(cloud_status_msg.status == 0){
+                system_status_led_control(LED_OFF); // 云端断开连接，关闭指示灯
+                break; // 云端断开连接，退出循环
+            }
+        }
+
         // 处理AI设备控制消息
         char *ai_response = get_ESP01S_message();
         if(ai_response != NULL && judge_ai_message_type(ai_response) == DEVICE_MESSAGE){
             process_ai_device_control_cmd(ai_response);
             clean_ESP01S_message();
         }
-        vTaskDelay(pdMS_TO_TICKS(100)); // 检查一次
+        vTaskDelay(pdMS_TO_TICKS(300)); // 检查一次
     }
 
-    // vTaskDelete(NULL);  // 自毁任务
+    vTaskDelete(NULL);  // 自毁任务
 }
 
 // AI云端控制任务函数
@@ -59,14 +71,9 @@ void ai_cloud_control_task(void *task_params)
 
     // 显示状态
     system_status_led_control(LED_ON); // 系统运行状态指示灯亮起
-    OLED_ShowString(1, 1, "Call AI...");
 
     // 连接服务端
     ESP01S_init();
-
-    // 通知本地边缘任务连接云端成功
-    cloud_status_msg.status = 1; // 连接云端成功
-    xQueueSend(cloud_status_queue_handle, &cloud_status_msg, portMAX_DELAY);
 
     // 与服务端握手
     printf("21\r\n"); // 告诉服务端我的设备id
@@ -76,9 +83,8 @@ void ai_cloud_control_task(void *task_params)
             clean_ESP01S_message();
             break; // 握手成功，退出循环
         }
-        vTaskDelay(pdMS_TO_TICKS(500)); // 检查一次
+        vTaskDelay(pdMS_TO_TICKS(300)); // 检查一次
     }
-
     printf("{\"device_type\": \"ESP01S\"}\r\n");  // 告诉服务端我的设备类型
     while(1){
         char *ai_response = get_ESP01S_message();
@@ -86,14 +92,14 @@ void ai_cloud_control_task(void *task_params)
             clean_ESP01S_message();
             break;
         }
-        vTaskDelay(pdMS_TO_TICKS(3000)); // 检查一次
+        vTaskDelay(pdMS_TO_TICKS(300));
     }
 
     // 与服务端通信
     uint8_t hearbeat_count = 0; // 心跳发送时机
     while(1){
         // 发送心跳包
-        if(++hearbeat_count > 6){
+        if(++hearbeat_count > 12){
             hearbeat_count = 0;
             printf("heartbeat\r\n");
             vTaskDelay(pdMS_TO_TICKS(2000)); // 最少2s
@@ -121,7 +127,7 @@ void ai_cloud_control_task(void *task_params)
             sensor_data.light
         );
 
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        vTaskDelay(pdMS_TO_TICKS(3000));
     }
 
     cloud_status_msg.status = 0; // 云端断开连接
@@ -134,38 +140,15 @@ void ai_cloud_control_task(void *task_params)
 void local_edge_control_task(void *task_params)
 {
     sensor_data_node sensor_data; // 传感器数据
-    cloud_status_node cloud_status_msg; // 云端连接状态节点
-    int local_control_flag = 1; // 本地控制标志
 
     memset(&sensor_data, 0, sizeof(sensor_data_node));
-    memset(&cloud_status_msg, 0, sizeof(cloud_status_node));
 
     OLED_Clear(); // 清空OLED屏幕
     servo_window_off(); // 关闭窗户
 
     while(1){
-        // 等待消息
-        if(xQueueReceive(cloud_status_queue_handle, &cloud_status_msg, 0) == pdPASS){
-            // 处理消息
-            switch(cloud_status_msg.status){
-                case 0: // 云端断开连接
-                    system_status_led_control(LED_OFF); // 系统运行状态指示灯熄灭
-                    local_control_flag = 1;
-                    break;
-                case 1: // 云端连接成功
-                    system_status_led_control(LED_ON); // 系统运行状态指示灯亮起
-                    local_control_flag = 0;
-                    break;
-            }
-            OLED_Clear(); // 清空OLED屏幕
-        }
-
-        if(local_control_flag == 0){ // 云端控制+本地控制
-            OLED_refresh("Cloud Control");
-        }
-        else if(local_control_flag == 1){  // 本地控制
-            OLED_refresh("Local Control");
-        }
+        // 刷新OLED屏幕
+        OLED_refresh("Smart Home");
 
         // 获取传感器数据
         DHT_get_temp_humi_data(&sensor_data.humidity, &sensor_data.temperature);
@@ -174,19 +157,19 @@ void local_edge_control_task(void *task_params)
         sensor_data.light = get_light_sensor_value();
 
         // 预警
-        if(sensor_data.temperature > 25 || sensor_data.smoke > 50 || sensor_data.co > 50){ // 一级预警
+        if(sensor_data.temperature > 39 || sensor_data.smoke > 5 || sensor_data.co > 3){ // 一级预警
             servo_window_up();      // 打开窗户
             motor_front_turn();     // 打开排风扇
             close_all_alarm_led();  // 关闭所有警报灯
             led_yellow_up();        // 亮黄灯
-            // buzzer_up();            // 打开警报
+            buzzer_up();            // 打开警报
         }
-        else if(sensor_data.temperature > 99 || sensor_data.smoke > 99 || sensor_data.co > 99){ // 二级预警
+        else if(sensor_data.temperature > 42 || sensor_data.smoke > 8 || sensor_data.co > 6){ // 二级预警
             servo_window_up();
             motor_front_turn();
             close_all_alarm_led();
             led_red_up();
-            // buzzer_up();
+            buzzer_up();
         }
 
         // 语音识别
@@ -198,7 +181,7 @@ void local_edge_control_task(void *task_params)
             clean_ASRPRO_message();
         }
 
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        vTaskDelay(pdMS_TO_TICKS(3000));
     }
 
     // vTaskDelete(NULL);  // 自毁任务
