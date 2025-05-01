@@ -1,4 +1,4 @@
-#include "device_white_list.h"
+#include "device_list.h"
 
 // 全局设备命令映射表（可动态扩展）
 device_cmd_node cmd_map_table[] =
@@ -15,6 +15,11 @@ device_cmd_node cmd_map_table[] =
     {"yellow_light_off", led_yellow_off},   // 关闭黄灯
     {"red_light_up", led_red_up},           // 打开红灯
     {"red_light_off", led_red_off},         // 关闭红灯
+
+    {"emergency_escape_mode", emergency_escape_mode}, // 紧急模式
+    {"awary_mode", awary_mode},                       // 离家模式
+    {"recreation_mode", recreation_mode},             // 娱乐模式
+    {"sleep_mode", sleep_mode},                    // 睡眠模式
 };
 
 int get_cmd_map_table_len(void)

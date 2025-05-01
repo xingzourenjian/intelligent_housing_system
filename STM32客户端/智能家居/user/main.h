@@ -67,13 +67,13 @@ void local_edge_control_task(void *task_params);
 
 void system_init(void);
 
-void recreation_mode(void); // 娱乐模式函数
+void emergency_escape_mode(void); // 紧急逃生模式
 
 void awary_mode(void); // 离家模式函数
 
-void sleep_mode(void); // 睡眠模式
+void recreation_mode(void); // 娱乐模式函数
 
-void emergency_escape_mode(void); // 紧急逃生模式
+void sleep_mode(void); // 睡眠模式
 
 void OLED_refresh(char *str);
 

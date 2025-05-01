@@ -11,7 +11,7 @@ import client_manager
 """
 如果使用抖音旗下的大模型，请添加环境变量 export DOUYIN_API_KEY="8512b578-dbb0-48a1-a3df-e26cf6f35ce0"
 """
-# 设备指令白名单库
+# 设备指令白名单
 device_white_list = {
     '打开报警器':'buzzer_up',
     '关闭报警器':'buzzer_off',
@@ -21,6 +21,14 @@ device_white_list = {
     '关闭排风扇':'fan_off',
     '开灯':'led_up',
     '关灯':'led_off',
+}
+
+# 场景模式名单
+scene_mode_list = {
+    '紧急模式':'emergency_escape_mode',
+    '离家模式':'awary_mode',
+    '娱乐模式':'recreation_mode',
+    '睡眠模式':'sleep_mode',
 }
 
 # 传感器阈值
@@ -47,7 +55,8 @@ ai_order = f"""\
 }}
 2、当用户描述环境状态变化时（如光线变暗、温度变化等），立即检索对应的可控设备。
 3、设备名称需与可控设备名称严格一致。
-4、当我发送传感器相关的数据给你，例如：\"温度=32 湿度=21 烟雾=55 一氧化碳=66 光照=88\r\n\"，你判断\
+4、场景模式也是设备控制，只是封装了一下，其对应的值就是函数名，会控制相关设备。
+5、当我发送传感器相关的数据给你，例如：\"温度=32 湿度=21 烟雾=55 一氧化碳=66 光照=88\r\n\"，你判断\
 对应的传感器模块数据是否超过阈值，超过了，告诉我哪个超过了，警告我有什么潜在问题或者危险。
 【设备映射表】
 提示：':'前面是设备名，后面是操作指令，设备指令用','隔开了
@@ -59,6 +68,16 @@ ai_order = f"""\
     "code": 23,
     "action": {{"打开报警器": "buzzer_up"}},
     "message": "已检测报警器，报警器工作正常咯"
+}}
+【场景模式映射表】
+{json.dumps(scene_mode_list, ensure_ascii=False, indent=4)}
+示例：
+我说：睡眠模式
+你的json格式字符串回答：
+{{
+    "code": 23,
+    "action": {{"睡眠模式": "sleep_mode"}},
+    "message": "好梦，晚安~"
 }}
 【传感器模块阈值表】
 提示：':'前面是传感器模块，后面是阈值，传感器模块用','隔开了
@@ -75,7 +94,7 @@ ai_order = f"""\
 {{
     "code": 24,
     "action": {{}},
-    "message": "家居环境良好！"
+    "message": "环境良好哦！"
 }}
 """
 
@@ -151,11 +170,16 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
     try:
         while True:
             # 获取客户端设备id
-            client_mgr.send_message_to_client(client_socket, client_mgr.make_send_message("请告诉我你的设备 数字id"))
+            client_mgr.send_message_to_client(client_socket, client_mgr.make_send_message("请告诉我你的id"))
             user_message = client_socket.recv(1024).decode('utf-8')
 
+            # 用户客户端主动断开连接
+            if not user_message:
+                print("客户端主动断开连接")
+                return  # 直接返回，跳转到finally
+
             try:
-                if not isinstance(int(user_message.strip()), int): # id 不是数字
+                if not isinstance(user_message.strip(), str): # 验证id类型
                     continue
                 else:
                     break
@@ -164,7 +188,7 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
             time.sleep(3.0)
 
         # 生成唯一客户端标识
-        device_id = int(user_message.strip())
+        device_id = user_message.strip()
 
         # 添加到客户端套接字列表
         client_ip, client_port = client_socket.getpeername()
@@ -278,7 +302,7 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
 if __name__ == '__main__':
     # 初始化实例
     client_mgr = client_manager.client_manager() # 客户端管理器实例
-    AI_mgr = AI_manager.AI_manager(client, model, stream, device_white_list) # AI管理器实例
+    AI_mgr = AI_manager.AI_manager(client, model, stream, device_white_list, scene_mode_list) # AI管理器实例
 
     AI_mgr.clean_all_histories() # 调试阶段，清空历史对话文件
 

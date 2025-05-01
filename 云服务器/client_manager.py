@@ -31,7 +31,7 @@ class client_manager:
     返回值：
         void
     """
-    def add_client(self, client_socket: socket.socket, client_address: tuple[str, int], device_id: int, client_dev_type: str = "PHONE") -> None:
+    def add_client(self, client_socket: socket.socket, client_address: tuple[str, int], device_id: str, client_dev_type: str = "PHONE") -> None:
         # 实例方法
         client_ip, client_port = client_socket.getpeername()
         with self.clients_lock:
@@ -87,7 +87,7 @@ class client_manager:
     返回值：
         void
     """
-    def update_device_id(self, client_socket: socket.socket, new_id: int) -> None:
+    def update_device_id(self, client_socket: socket.socket, new_id: str) -> None:
         with self.clients_lock:  # 加锁保证线程安全
             if client_socket in self.clients:
                 self.clients[client_socket]["device_id"] = new_id

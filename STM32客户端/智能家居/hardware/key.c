@@ -59,7 +59,7 @@ void EXTI9_5_IRQHandler(void)
 	}
 
 	// 按键2
-	if(EXTI_GetITStatus(EXTI_Line6) == SET){
+	else if(EXTI_GetITStatus(EXTI_Line6) == SET){
 		if(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_6) == 0){
 			delay_ms(20);											//延时消抖
             while(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_6) == 0);	//等待按键松手

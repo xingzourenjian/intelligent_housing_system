@@ -1,19 +1,20 @@
-#ifndef __DEVICE_WHITE_LIST_H__
-#define __DEVICE_WHITE_LIST_H__
+#ifndef __DEVICE_LIST_H__
+#define __DEVICE_LIST_H__
 
 #include "stm32f10x.h"
 #include "buzzer.h"
 #include "servo.h"
 #include "motor.h"
 #include "led.h"
+#include "main.h"
 
 // 设备控制函数原型（统一接口）
 typedef void (*device_control_func)(void);
 
-// 命令-函数映射结构体
+// 设备指令-函数映射结构体
 typedef struct
 {
-    const char *cmd;            // 命令字符串
+    const char *cmd;            // 设备指令字符串
     device_control_func func;   // 对应的控制函数
 }device_cmd_node;
 

@@ -40,10 +40,7 @@ static void PWM_init(void)
 static void PWM_set_compare4(uint16_t compare)
 {
 	// 约束范围
-	if(compare < 0){
-		compare = 0;
-	}
-	else if(compare > 100){
+	if(compare > 100){
 		compare = 100;
 	}
 

@@ -7,12 +7,13 @@ import time
 from client_manager import MESSAGE_TYPE
 
 class AI_manager:
-    def __init__(self, client, model, stream, device_white_list: dict) -> None:
+    def __init__(self, client, model, stream, device_white_list: dict, scene_mode_list: dict) -> None:
         # 实例属性
         self.client = client
         self.model = model
         self.stream = stream
         self.device_white_list = device_white_list  # 设备白名单，字典
+        self.scene_mode_list = scene_mode_list      # 场景模式名单，字典
         self.get_response_lock = threading.Lock()   # 创建线程锁，防止多线程同时调用AI接口
         self.history_file_lock = threading.Lock()   # 创建线程锁，防止多线程同时读写文件导致数据损坏
 
@@ -86,7 +87,7 @@ class AI_manager:
         # 过滤AI设备操作指令
         for device, cmd in action.items():
             wait_clean_cmd = cmd.lower() # 统一转换为小写
-            if wait_clean_cmd in self.device_white_list.values():
+            if wait_clean_cmd in self.device_white_list.values() or wait_clean_cmd in self.scene_mode_list.values():
                 safe_action[device] = wait_clean_cmd
             else:
                 print(f"validate_device_actions 非法指令拦截: {cmd}")

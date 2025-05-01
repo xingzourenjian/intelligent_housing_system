@@ -9,7 +9,7 @@
 #include "bluetooth.h"
 #include "FreeRTOS.h"
 #include "task.h"
-#include "device_white_list.h"
+#include "device_list.h"
 
 #define UART3_MAX_RECV_LEN 512
 #define UART3_MAX_SEND_LEN 512

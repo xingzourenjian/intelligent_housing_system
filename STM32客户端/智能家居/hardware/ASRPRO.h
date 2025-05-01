@@ -4,7 +4,6 @@
 #include "stm32f10x.h"
 #include <string.h> // 定义了NULL
 
-#include "device_white_list.h"
 #include "main.h"
 
 #define UART1_MAX_RECV_LEN 512

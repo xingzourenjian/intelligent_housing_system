@@ -1,7 +1,5 @@
 #include "main.h"
 
-static uint32_t wdg_counter = 0; // 看门狗计数器
-
 // 任务句柄
 TaskHandle_t cloud_task_handle = NULL;
 TaskHandle_t edge_task_handle = NULL;
@@ -15,6 +13,13 @@ int main(int argc, const char *argv[])
     // 系统初始化
     system_init();
 
+    if(RCC_GetFlagStatus(RCC_FLAG_IWDGRST) == SET){ // 独立看门狗复位
+        buzzer_up();
+        delay_ms(500);
+        buzzer_off();
+        RCC_ClearFlag(); // 清除复位标志位
+    }
+
     // 创建消息队列
     cloud_status_queue_handle = xQueueCreate(5, sizeof(cloud_status_node));
 
@@ -23,12 +28,14 @@ int main(int argc, const char *argv[])
     xTaskCreate(local_edge_control_task, "local_edge_control_task", 1024, NULL, 3, &edge_task_handle);
     xTaskCreate(monitor_task, "monitor_task", 1024, NULL, 4, &monitor_task_handle); // 创建监控任务
 
+    // 初始化独立看门狗
+    IWDG_init();
+
     // 启动调度器
     vTaskStartScheduler();
 
     // 任务调度器不会到达这里, 如果到达这里，说明调度器启动失败
     while(1){
-        buzzer_up();
     }
 }
 
@@ -163,6 +170,14 @@ void local_edge_control_task(void *task_params)
             close_all_alarm_led();  // 关闭所有警报灯
             led_yellow_up();        // 亮黄灯
             buzzer_up();            // 打开警报
+            vTaskDelay(pdMS_TO_TICKS(500));
+            buzzer_off();
+            buzzer_up();
+            vTaskDelay(pdMS_TO_TICKS(500));
+            buzzer_off();
+            buzzer_up();
+            vTaskDelay(pdMS_TO_TICKS(500));
+            buzzer_off();
         }
         else if(sensor_data.temperature > 42 || sensor_data.smoke > 8 || sensor_data.co > 6){ // 二级预警
             servo_window_up();
@@ -212,15 +227,15 @@ void system_init(void)
     ASRPRO_init();
 
     blue_init(); // 蓝牙调试
-
-    // IWDG_init();
 }
 
-// 娱乐模式函数
-void recreation_mode(void)
+// 紧急逃生模式
+void emergency_escape_mode(void)
 {
-    room_lamp_adjust(10); // 调节卧室灯
-    // 拉上窗帘
+    buzzer_up();
+    servo_window_up();
+    room_lamp_adjust(100);
+    led_red_up();
 }
 
 // 离家模式函数
@@ -231,19 +246,17 @@ void awary_mode(void)
     room_lamp_adjust(0);
 }
 
+// 娱乐模式函数
+void recreation_mode(void)
+{
+    room_lamp_adjust(10); // 调节卧室灯
+    // 拉上窗帘
+}
+
 // 睡眠模式
 void sleep_mode(void)
 {
     room_lamp_adjust(0);
-}
-
-// 紧急逃生模式
-void emergency_escape_mode(void)
-{
-    buzzer_up();
-    servo_window_up();
-    room_lamp_adjust(100);
-    led_red_up();
 }
 
 // OLED刷新函数
@@ -266,8 +279,10 @@ void vApplicationIdleHook(void)
 // 系统节拍钩子函数
 void vApplicationTickHook(void)
 {
+    static uint32_t wdg_counter = 0; // 看门狗计数器
+
     wdg_counter++;
-    if(wdg_counter >= 800){   // 每 800 个节拍（0.8s）喂狗一次
+    if(wdg_counter > 600){   // 每 600 个节拍（0.6s）喂狗一次
         IWDG_ReloadCounter(); // 重置独立看门狗计数器（喂狗）
         wdg_counter = 0;
     }
@@ -277,6 +292,4 @@ void vApplicationTickHook(void)
 void vApplicationStackOverflowHook(TaskHandle_t xTask, char *pcTaskName)
 {
     (void)xTask;  // 避免未使用变量警告
-
-    buzzer_up();
 }
