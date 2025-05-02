@@ -42,7 +42,7 @@ static void ADC_init(uint16_t GPIO_Pin, uint8_t ADC_Channel)
     ADC_GetConversionValue(ADC1); // 丢掉首次采样不稳定值
 }
 
-static uint16_t get_ADC_value(uint8_t ADC_Channel)
+static uint16_t ADC_get_value(uint8_t ADC_Channel)
 {
     ADC_RegularChannelConfig(ADC1, ADC_Channel, 1, ADC_SampleTime_28Cycles5); // 配置通道，采样顺序1
     ADC_GetConversionValue(ADC1); // 丢掉残留数据
@@ -57,12 +57,12 @@ void MQ2_sensor_init(void)
     ADC_init(GPIO_Pin_4, ADC_Channel_4);
 }
 
-float get_MQ2_sensor_value(void)
+float MQ2_get_sensor_value(void)
 {
     uint16_t value = 0;
 
-    for(int i = 0; i < 5; i++){
-        value += get_ADC_value(ADC_Channel_4); // 获取ADC值 0-4095
+    for(uint8_t i = 0; i < 5; i++){
+        value += ADC_get_value(ADC_Channel_4); // 获取ADC值 0-4095
         vTaskDelay(pdMS_TO_TICKS(2)); // 避免ADC采样不稳定
     }
     value /= 5; // 取平均值
@@ -70,14 +70,14 @@ float get_MQ2_sensor_value(void)
     return (1.0 * value / 4095) * 100; // 转换到0-100的范围
 }
 
-float get_MQ2_sensor_voltage_value(void)
+float MQ2_get_sensor_voltage_value(void)
 {
-    return 1.0 * get_ADC_value(ADC_Channel_4) / 4095 * 3.3;
+    return 1.0 * ADC_get_value(ADC_Channel_4) / 4095 * 3.3;
 }
 
-void show_MQ2_sensor_value_OLED(uint8_t line, uint8_t column)
+void MQ2_sensor_show_value_to_OLED(uint8_t line, uint8_t column)
 {
-    float value = get_MQ2_sensor_value();
+    float value = MQ2_get_sensor_value();
 
     OLED_ShowString(line, column, "sm:");
     OLED_ShowNum(line, column+3, (uint32_t)value, 2);

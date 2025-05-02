@@ -5,23 +5,16 @@
 
 typedef enum
 {
-    BUZZER_OFF = 0, // 蜂鸣器关闭
-    BUZZER_ON,      // 蜂鸣器打开
-}BUZZER_STATUS;
+    BUZZER_OFF = 0,
+    BUZZER_ON,
+}buzzer_status_t;   // 蜂鸣器状态枚举体
 
-typedef enum
-{
-    BUZZER_PRE_WARN_OFF = 0, // 预警解除
-    BUZZER_PRE_WARN_1,       // 一级预警
-    BUZZER_PRE_WARN_2,       // 二级预警
-}BUZZER_PRE_WARN; // 蜂鸣器状态
+void buzzer_init(void);
 
-void buzzer_init(void); // 初始化蜂鸣器端口
+void buzzer_control(buzzer_status_t BUZZER_STATUS); // 控制蜂鸣器状态
 
-void buzzer_control(BUZZER_STATUS state); // 控制蜂鸣器状态
+void buzzer_on(void);
 
-void buzzer_up(void); // 打开蜂鸣器
-
-void buzzer_off(void); // 关闭蜂鸣器
+void buzzer_off(void);
 
 #endif

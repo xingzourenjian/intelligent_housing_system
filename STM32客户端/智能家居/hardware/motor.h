@@ -8,7 +8,7 @@
 
 void motor_init(void);
 
-void motor_set_speed(int8_t speed);
+void motor_set_speed(uint8_t speed);
 
 void motor_front_turn(void);
 

@@ -3,18 +3,18 @@
 
 #include "stm32f10x.h"
 #include <stdio.h>
-#include <string.h> // 定义了NULL
+#include <string.h>
 
 #define UART2_MAX_RECV_LEN 512
 
 void blue_init(void);
 
-void send_message_to_blue_string(char *str);
+void blue_send_string_message(const char *str);
 
-void send_message_to_blue_num(uint32_t number);
+void blue_send_num_message(uint32_t number);
 
-char *get_blue_message(void);
+char *blue_get_message(void);
 
-void clean_blue_message(void);
+void blue_clean_message(void);
 
 #endif

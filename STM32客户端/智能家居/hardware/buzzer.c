@@ -14,12 +14,12 @@ void buzzer_init(void)
 }
 
 // 控制蜂鸣器状态
-void buzzer_control(BUZZER_STATUS state)
+void buzzer_control(buzzer_status_t BUZZER_STATUS)
 {
-	if(state == BUZZER_ON){
+	if(BUZZER_STATUS == BUZZER_ON){
 		GPIO_SetBits(GPIOA, GPIO_Pin_8);
 	}
-	else if(state == BUZZER_OFF){
+	else if(BUZZER_STATUS == BUZZER_OFF){
 		GPIO_ResetBits(GPIOA, GPIO_Pin_8);
 	}
 	else{
@@ -27,7 +27,7 @@ void buzzer_control(BUZZER_STATUS state)
 	}
 }
 
-void buzzer_up(void)
+void buzzer_on(void)
 {
 	buzzer_control(BUZZER_ON);
 }

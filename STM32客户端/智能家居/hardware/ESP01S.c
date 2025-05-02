@@ -79,7 +79,7 @@ static void UART3_send_byte(char byte)
 	while(USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET);
 }
 
-static void UART3_send_string(char *string)
+static void UART3_send_string(const char *string)
 {
 	uint8_t i = 0;
 	for(i = 0; string[i] != '\0'; i++){
@@ -87,7 +87,7 @@ static void UART3_send_string(char *string)
     }
 }
 
-// static void UART3_send_number(uint32_t number)
+// static void UART3_send_number(uint32_t number)  // 不会发送数字末尾的0
 // {
 // 	uint32_t i = 0;
 // 	while(number){
@@ -101,7 +101,7 @@ static void UART3_send_string(char *string)
 // 	}while(number);
 // }
 
-static void clean_UART3_rx_packet(void)
+static void UART3_clean_rx_packet(void)
 {
     memset(UART3_rx_packet, 0, sizeof(UART3_rx_packet)); // 清空接收缓存
     UART3_rx_flag = 0; // 清空接收标志位
@@ -153,8 +153,7 @@ void USART3_IRQHandler(void)
 
 void TIM3_IRQHandler(void)
 {
-	if(TIM_GetITStatus(TIM3, TIM_IT_Update) == SET)
-    {
+	if(TIM_GetITStatus(TIM3, TIM_IT_Update) == SET){
 	    //等待时间超过1s
         UART3_rx_flag = 1;
 
@@ -174,36 +173,37 @@ void ESP01S_init(void)
     receive_mode = 1;
 
     // 清楚异常断开的影响
-    send_cmd_to_ESP01S("+++", 1000);
-    send_cmd_to_ESP01S("AT+CIPMODE=0\r\n", 500); // 关闭透传模式
-    clean_UART3_rx_packet(); // 清空接收缓存
+    ESP01S_send_cmd("+++", 1000);
+    ESP01S_send_cmd("AT+CIPMODE=0\r\n", 500); // 关闭透传模式
+    UART3_clean_rx_packet(); // 清空接收缓存
 
-    while(!send_cmd_to_ESP01S("AT+SAVETRANSLINK=0\r\n", 500)); // 关闭透传模式自动重连
-    clean_UART3_rx_packet();
+    while(!ESP01S_send_cmd("AT+SAVETRANSLINK=0\r\n", 500)); // 关闭透传模式自动重连
+    UART3_clean_rx_packet();
 
     // // 连接WiFi
-    // while(!send_cmd_to_ESP01S("AT+CWMODE=3\r\n", 500)); // STA+AP模式
-    // clean_UART3_rx_packet();
-    // while(!send_cmd_to_ESP01S("AT+CWJAP=\"qingge\",\"yx123456\"\r\n", 2000)); // 连接热点
-    // clean_UART3_rx_packet();
+    // while(!ESP01S_send_cmd("AT+CWMODE=3\r\n", 500)); // STA+AP模式
+    // UART3_clean_rx_packet();
+    // while(!ESP01S_send_cmd("AT+CWJAP=\"qingge\",\"yx123456\"\r\n", 2000)); // 连接热点
+    // UART3_clean_rx_packet();
 
     // 连接服务器
-    while(!send_cmd_to_ESP01S("AT+CIPMUX=0\r\n", 500)); // 单路连接模式
-    clean_UART3_rx_packet();
-    while(!send_cmd_to_ESP01S("AT+CIPSTART=\"TCP\",\"47.86.228.121\",8086\r\n", 1000)); // 建立TCP连接
-    clean_UART3_rx_packet();
+    while(!ESP01S_send_cmd("AT+CIPMUX=0\r\n", 500)); // 单路连接模式
+    UART3_clean_rx_packet();
+    while(!ESP01S_send_cmd("AT+CIPSTART=\"TCP\",\"47.86.228.121\",8086\r\n", 1000)); // 建立TCP连接
+    UART3_clean_rx_packet();
 
     // 进入透传模式
-    while(!send_cmd_to_ESP01S("AT+CIPMODE=1\r\n", 500)); // 开启透传模式
-    clean_UART3_rx_packet();
-    while(!send_cmd_to_ESP01S("AT+CIPSEND\r\n", 500)); // 进入透传
-    clean_UART3_rx_packet();
+    while(!ESP01S_send_cmd("AT+CIPMODE=1\r\n", 500)); // 开启透传模式
+    UART3_clean_rx_packet();
+    while(!ESP01S_send_cmd("AT+CIPSEND\r\n", 500)); // 进入透传
+    UART3_clean_rx_packet();
 
     // 转换接收模式，即接收服务端消息
     receive_mode = 2;
 }
 
-uint8_t send_cmd_to_ESP01S(char *cmd, uint32_t ms)
+// 发送指令给ESP01S模块
+uint8_t ESP01S_send_cmd(const char *cmd, uint32_t ms)
 {
     uint8_t ret_flag = 0;
 
@@ -223,7 +223,7 @@ uint8_t send_cmd_to_ESP01S(char *cmd, uint32_t ms)
     return ret_flag;
 }
 
-char *get_ESP01S_message(void)
+char *ESP01S_get_message(void)
 {
     if(UART3_rx_flag == 1){
         return UART3_rx_packet;
@@ -232,15 +232,16 @@ char *get_ESP01S_message(void)
     return NULL; // 没有接收到数据，返回NULL
 }
 
-void clean_ESP01S_message(void)
+void ESP01S_clean_message(void)
 {
-    clean_UART3_rx_packet(); // 清空接收缓存
+    UART3_clean_rx_packet(); // 清空接收缓存
 }
 
 // 判断AI消息类型
-int judge_ai_message_type(char *ai_response)
+uint8_t ESP01S_judge_ai_message_type(const char *ai_response)
 {
     char *p = strstr(ai_response, "code"); // 检查 code 是否存在
+
     if(!p){
         return 0;
     }
@@ -249,7 +250,7 @@ int judge_ai_message_type(char *ai_response)
 
     // 定位到值的第一个非空白符
     int skipped_chars = 0;
-    sscanf(p+1, "%*[ \t\n\r]%n", &skipped_chars); // 跳过连续的空白字符（空格、制表符、换行符、回车符） 没跳过时，skipped_chars变量不会被赋值
+    sscanf(++p, "%*[ \t\n\r]%n", &skipped_chars); // 跳过连续的空白字符（空格、制表符、换行符、回车符） 没跳过时，skipped_chars变量不会被赋值
     p += skipped_chars;
 
     int code = 0;
@@ -258,11 +259,11 @@ int judge_ai_message_type(char *ai_response)
     return code;
 }
 
-// 解析AI返回的消息 {"code": 23, "action": {"开窗":"window_up", "打开报警器": "buzzer_up"}, "message": "消息"}\r\n
-static uint8_t get_action_and_message(char *ai_response, char device_cmd[MAX_CMD_COUNT][MAX_CMD_LEN])
+// 解析AI返回的消息 {"code":23, "action":{"窗户调节":"window_adjust(90)", "打开报警器":"buzzer_on"}, "message":"消息"}\r\n
+static uint8_t ESP01S_get_action_and_message(const char *ai_response, char device_cmd_func[MAX_CMD_COUNT][MAX_CMD_LEN])
 {
     uint8_t cmd_count = 0;
-    memset(device_cmd, 0, MAX_CMD_COUNT * MAX_CMD_LEN);
+    memset(device_cmd_func, 0, MAX_CMD_COUNT * MAX_CMD_LEN);
 
     char *p = strstr(ai_response, "code"); // 检查 code 是否存在
     if(!p){
@@ -273,7 +274,7 @@ static uint8_t get_action_and_message(char *ai_response, char device_cmd[MAX_CMD
 
     // 定位到值的第一个非空白符
     int skipped_chars = 0;
-    sscanf(p++, "%*[ \t\n\r]%n", &skipped_chars); // 跳过连续的空白字符（空格、制表符、换行符、回车符）
+    sscanf(++p, "%*[ \t\n\r]%n", &skipped_chars); // 跳过连续的空白字符（空格、制表符、换行符、回车符）
     p += skipped_chars;
 
     int code = 0;
@@ -296,11 +297,11 @@ static uint8_t get_action_and_message(char *ai_response, char device_cmd[MAX_CMD
 
                 // 定位到值的第一个非空白符
                 skipped_chars = 0;
-                sscanf(p++, "%*[ \t\n\r]%n", &skipped_chars); // 跳过连续的空白字符（空格、制表符、换行符、回车符）
+                sscanf(++p, "%*[ \t\n\r]%n", &skipped_chars); // 跳过连续的空白字符（空格、制表符、换行符、回车符）
                 p += skipped_chars;
 
-                // 获取值
-                sscanf(p, "%[^\"]", device_cmd[cmd_count++]);
+                // 获取值, 如window_adjust(90)
+                sscanf(p, "%[^\"]", device_cmd_func[cmd_count++]);
             }
         }
     }
@@ -314,7 +315,7 @@ static uint8_t get_action_and_message(char *ai_response, char device_cmd[MAX_CMD
 
     //     // 定位到值的第一个非空白符
     //     skipped_chars = 0;
-    //     sscanf(p++, "%*[ \t\n\r]%n", &skipped_chars); // 跳过连续的空白字符（空格、制表符、换行符、回车符）
+    //     sscanf(++p, "%*[ \t\n\r]%n", &skipped_chars); // 跳过连续的空白字符（空格、制表符、换行符、回车符）
     //     p += skipped_chars;
 
     //     // 获取值
@@ -324,40 +325,47 @@ static uint8_t get_action_and_message(char *ai_response, char device_cmd[MAX_CMD
     return cmd_count;
 }
 
-// 执行设备控制命令
-uint8_t execute_command(const char *device_cmd)
+// 执行设备指令
+uint8_t ESP01S_execute_device_cmd(const char *device_cmd_func)
 {
-    int cmd_map_table_len = get_cmd_map_table_len(); // 获取命令映射表大小
+    char func_name[MAX_CMD_LEN] = {0}; // 设备指令函数名
+    int func_param = 0;                // 设备指令函数参数
 
-    if(cmd_map_table_len <= 0){ // 映射表为空
-        return 0;
+    // 解析指令对应的函数名和参数
+    if(sscanf(device_cmd_func, "%31[^(](%d)", func_name, &func_param) == 2){ // 仅有一个int参数
+        for(uint8_t i = 0; i < device_cmd_list_length(); i++){ // 遍历映射表查找匹配命令
+            if(strcmp(func_name, device_cmd_list[i].cmd) == 0){
+                device_cmd_list[i].func.one_param_func((uint8_t)func_param); // 调用对应函数
+                return 1;
+            }
+        }
     }
-
-    // 遍历映射表查找匹配命令
-    for(int i = 0; i < cmd_map_table_len; i++){
-        if(strcmp(device_cmd, cmd_map_table[i].cmd) == 0){
-            cmd_map_table[i].func(); // 调用对应函数
-            return 1;
+    else if(sscanf(device_cmd_func, "%s", func_name) == 1){ // 仅有函数名，没有参数
+        for(uint8_t i = 0; i < device_cmd_list_length(); i++){
+            if(strcmp(func_name, device_cmd_list[i].cmd) == 0){
+                device_cmd_list[i].func.no_param_func();
+                return 1;
+            }
         }
     }
 
     return 0; // 未找到匹配命令
 }
 
-// 处理AI设备控制命令
-uint8_t process_ai_device_control_cmd(char *ai_response)
+// 处理AI消息
+uint8_t ESP01S_process_ai_message(const char *ai_response)
 {
-    char device_cmd[MAX_CMD_COUNT][MAX_CMD_LEN] = {0}; // 存储设备命令
+    char device_cmd_func[MAX_CMD_COUNT][MAX_CMD_LEN] = {0}; // 存储设备命令
     uint8_t cmd_count = 0; // 设备命令计数器
-    uint8_t exec_flag = 0; // 执行命令结果
+    uint8_t exec_flag = 0; // 执行设备指令结果
 
     // 解析AI返回的消息
-    cmd_count = get_action_and_message(ai_response, device_cmd);
+    cmd_count = ESP01S_get_action_and_message(ai_response, device_cmd_func);
 
     // 执行设备控制命令
     for(uint8_t i = 0; i < cmd_count; i++){
-        exec_flag = execute_command(device_cmd[i]); // 执行设备控制命令
+        exec_flag = ESP01S_execute_device_cmd(device_cmd_func[i]); // 执行设备控制命令
     }
 
-    return exec_flag; // 返回执行命令结果
+    return exec_flag; // 返回执行设备指令结果
 }

@@ -53,19 +53,16 @@ void room_lamp_init(void)
     PWM_init();
 }
 
-void room_lamp_adjust(int adjust_value)
+void room_lamp_adjust(uint8_t adjust_value)
 {
 	if(adjust_value > 100){
 		adjust_value = 100; // 限制范围0~100
-	}
-	if(adjust_value < 0){
-		adjust_value = 0;
 	}
 
     PWM_set_compare2(LED_ARR - adjust_value);
 }
 
-void room_lamp_up(void)
+void room_lamp_on(void)
 {
     room_lamp_adjust(100);
 }
@@ -102,37 +99,37 @@ void led_init(void)
 }
 
 // PC13 系统运行状态指示灯
-void system_status_led_control(LED_STATUS state)
+void system_status_led_control(led_status_t LED_STATUS)
 {
-	if(state == LED_ON){
+	if(LED_STATUS == LED_ON){
 		GPIO_ResetBits(GPIOC, SYSTEM_LED);
 	}
-	else if(state == LED_OFF){
+	else if(LED_STATUS == LED_OFF){
 		GPIO_SetBits(GPIOC, SYSTEM_LED);
 	}
 }
 
-void system_status_led_up(void)
+void system_status_led_on(void)
 {
-	GPIO_ResetBits(GPIOC, SYSTEM_LED);
+	system_status_led_control(LED_ON);
 }
 
-void system_status_led_down(void)
+void system_status_led_off(void)
 {
-	GPIO_SetBits(GPIOC, SYSTEM_LED);
+	system_status_led_control(LED_OFF);
 }
 
-void led_control(uint16_t LED_num, LED_STATUS state)
+void led_control(uint16_t LED_num, led_status_t LED_STATUS)
 {
-	if(state == LED_ON){
+	if(LED_STATUS == LED_ON){
 		GPIO_ResetBits(GPIOA, LED_num);
 	}
-	else if(state == LED_OFF){
+	else if(LED_STATUS == LED_OFF){
 		GPIO_SetBits(GPIOA, LED_num);
 	}
 }
 
-void led_up(uint16_t LED_num)
+void led_on(uint16_t LED_num)
 {
 	led_control(LED_num, LED_ON);
 }
@@ -152,13 +149,13 @@ void led_flip(uint16_t LED_num)
 	}
 }
 
-void close_all_alarm_led(void)
+void led_close_all_alarm(void)
 {
 	led_off(YELLOW_LED);
 	led_off(RED_LED);
 }
 
-void led_green_up(void)
+void led_green_on(void)
 {
 	led_control(GREEN_LED, LED_ON);
 }
@@ -168,7 +165,7 @@ void led_green_off(void)
 	led_control(GREEN_LED, LED_OFF);
 }
 
-void led_yellow_up(void)
+void led_yellow_on(void)
 {
 	led_control(YELLOW_LED, LED_ON);
 }
@@ -178,7 +175,7 @@ void led_yellow_off(void)
 	led_control(YELLOW_LED, LED_OFF);
 }
 
-void led_red_up(void)
+void led_red_on(void)
 {
 	led_control(RED_LED, LED_ON);
 }

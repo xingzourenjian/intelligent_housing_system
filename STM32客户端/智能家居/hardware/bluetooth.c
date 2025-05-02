@@ -48,7 +48,7 @@ static void UART2_send_byte(char byte)
 	while(USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET);
 }
 
-static void UART2_send_string(char *string)
+static void UART2_send_string(const char *string)
 {
 	uint8_t i = 0;
 	for(i = 0; string[i] != '\0'; i++){
@@ -56,7 +56,7 @@ static void UART2_send_string(char *string)
 	}
 }
 
-static void UART2_send_number(uint32_t number)
+static void UART2_send_number(uint32_t number) // 不会发送数字末尾的0
 {
 	uint32_t i = 0;
 	while(number){
@@ -70,7 +70,7 @@ static void UART2_send_number(uint32_t number)
 	}while(number);
 }
 
-static void clean_UART2_rx_packet(void)
+static void UART2_clean_rx_packet(void)
 {
     memset(UART2_rx_packet, 0, sizeof(UART2_rx_packet)); // 清空接收缓存
     UART2_rx_flag = 0; // 清空接收标志位
@@ -114,17 +114,17 @@ void blue_init(void)
 	UART2_init();
 }
 
-void send_message_to_blue_string(char *str)
+void blue_send_string_message(const char *str)
 {
     UART2_send_string(str);
 }
 
-void send_message_to_blue_num(uint32_t number)
+void blue_send_num_message(uint32_t number)
 {
 	UART2_send_number(number);
 }
 
-char *get_blue_message(void)
+char *blue_get_message(void)
 {
     if(UART2_rx_flag == 1){
 		return (char *)UART2_rx_packet;
@@ -132,7 +132,7 @@ char *get_blue_message(void)
     return NULL;
 }
 
-void clean_blue_message(void)
+void blue_clean_message(void)
 {
-	clean_UART2_rx_packet();
+	UART2_clean_rx_packet();
 }

@@ -17,6 +17,15 @@ class AI_manager:
         self.get_response_lock = threading.Lock()   # 创建线程锁，防止多线程同时调用AI接口
         self.history_file_lock = threading.Lock()   # 创建线程锁，防止多线程同时读写文件导致数据损坏
 
+        # 预处理允许的指令
+        self.allowed_commands = set()
+        # 合并设备白名单和场景模式的指令
+        all_commands = list(device_white_list.values()) + list(scene_mode_list.values())
+        for cmd in all_commands:
+            # 提取函数名部分，如"window_adjust(10)" -> "window_adjust"
+            func_name = cmd.split('(')[0].strip().lower()
+            self.allowed_commands.add(func_name)
+
     """
     功能：
         将AI初始化消息 初始化为 默认对话记录
@@ -87,8 +96,12 @@ class AI_manager:
         # 过滤AI设备操作指令
         for device, cmd in action.items():
             wait_clean_cmd = cmd.lower() # 统一转换为小写
-            if wait_clean_cmd in self.device_white_list.values() or wait_clean_cmd in self.scene_mode_list.values():
-                safe_action[device] = wait_clean_cmd
+            # 提取函数名部分，如"window_adjust(20)" -> "window_adjust"
+            func_name = wait_clean_cmd.split('(')[0].strip()
+
+            # 验证函数名是否在允许的指令集合中
+            if func_name in self.allowed_commands:
+                safe_action[device] = wait_clean_cmd  # 保留原始指令
             else:
                 print(f"validate_device_actions 非法指令拦截: {cmd}")
 

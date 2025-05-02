@@ -4,18 +4,14 @@
 #include "stm32f10x.h"
 #include <stdio.h>
 #include <stdarg.h>
-#include <string.h> // 定义了NULL
+#include <string.h>
 
-#include "bluetooth.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "device_list.h"
 
 #define UART3_MAX_RECV_LEN 512
 #define UART3_MAX_SEND_LEN 512
-
-extern char UART3_rx_packet[UART3_MAX_RECV_LEN];
-extern uint8_t UART3_rx_flag;
 
 // AI返回的消息格
 #define MAX_CMD_COUNT 12        // 最大device_cmd数量
@@ -24,16 +20,14 @@ extern uint8_t UART3_rx_flag;
 
 void ESP01S_init(void);
 
-uint8_t send_cmd_to_ESP01S(char *cmd, uint32_t ms);
+uint8_t ESP01S_send_cmd(const char *cmd, uint32_t ms); // 发送指令给ESP01S模块
 
-char *get_ESP01S_message(void);
+char *ESP01S_get_message(void);
 
-void clean_ESP01S_message(void);
+void ESP01S_clean_message(void);
 
-int judge_ai_message_type(char *ai_response);
+uint8_t ESP01S_judge_ai_message_type(const char *ai_response); // 判断AI消息类型
 
-uint8_t execute_command(const char *device_cmd);
-
-uint8_t process_ai_device_control_cmd(char *ai_response);
+uint8_t ESP01S_process_ai_message(const char *ai_response); // 处理AI消息
 
 #endif

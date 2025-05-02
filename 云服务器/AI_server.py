@@ -13,14 +13,22 @@ import client_manager
 """
 # 设备指令白名单
 device_white_list = {
-    '打开报警器':'buzzer_up',
+    '打开报警器':'buzzer_on',
     '关闭报警器':'buzzer_off',
-    '开窗':'window_up',
+    '开窗':'window_on',
     '关窗':'window_off',
-    '打开排风扇':'fan_up',
+    '打开排风扇':'fan_on',
     '关闭排风扇':'fan_off',
-    '开灯':'led_up',
-    '关灯':'led_off',
+    '打开卧室灯':'room_lamp_on',
+    '关闭卧室灯':'room_lamp_off',
+    '打开黄灯':'yellow_light_on',
+    '关闭黄灯':'yellow_light_off',
+    '打开红灯':'red_light_on',
+    '关闭红灯':'red_light_off',
+
+    '窗户调节':'window_adjust(10)',
+    '排风扇调节':'fan_adjust(10)',
+    '卧室灯调节':'room_lamp_adjust(10)',
 }
 
 # 场景模式名单
@@ -33,9 +41,9 @@ scene_mode_list = {
 
 # 传感器阈值
 sensor_value_cutoff = {
-    '温度':40.0,
-    '湿度':90.0,
-    '烟雾':6.0,
+    '温度':38.0,
+    '湿度':80.0,
+    '烟雾':5.0,
     '一氧化碳':3.0,
     '光照':60.0,
 }
@@ -59,15 +67,18 @@ ai_order = f"""\
 5、当我发送传感器相关的数据给你，例如：\"温度=32 湿度=21 烟雾=55 一氧化碳=66 光照=88\r\n\"，你判断\
 对应的传感器模块数据是否超过阈值，超过了，告诉我哪个超过了，警告我有什么潜在问题或者危险。
 【设备映射表】
-提示：':'前面是设备名，后面是操作指令，设备指令用','隔开了
+提示：
+1、':'前面是设备名，后面是操作指令，设备指令用','隔开了
+2、 当设备指令包含括号时，括号内为参数值，如"window_adjust(90)"表示调用window_adjust函数并传入90
+3、 参数必须是整数，角度类的参数范围是0-180，其他参数范围是0-100
 {json.dumps(device_white_list, ensure_ascii=False, indent=4)}
 示例：
-我说：检测一下报警器是否正常？
+用户说：把窗户打开一点点
 你的json格式字符串回答：
 {{
     "code": 23,
-    "action": {{"打开报警器": "buzzer_up"}},
-    "message": "已检测报警器，报警器工作正常咯"
+    "action": {{"窗户调节": "window_adjust(10)"}},
+    "message": "已调节窗户"
 }}
 【场景模式映射表】
 {json.dumps(scene_mode_list, ensure_ascii=False, indent=4)}
@@ -83,11 +94,11 @@ ai_order = f"""\
 提示：':'前面是传感器模块，后面是阈值，传感器模块用','隔开了
 {json.dumps(sensor_value_cutoff, ensure_ascii=False, indent=4)}
 示例：
-我说：温度:32, 湿度:21, 烟雾:55, 一氧化碳:66, 光照:88\r\n
+我说：温度:38, 湿度:80, 烟雾:5, 一氧化碳:3, 光照:60\r\n
 有传感器阈值超标的情况下，你的json格式字符串回答：
 {{
     "code": 23,
-    "action": {{"开窗":"window_up", "打开报警器": "buzzer_up"}},
+    "action": {{"开窗":"window_on", "打开报警器": "buzzer_on"}},
     "message": "警告，一氧化碳浓度过高，有中毒风险！我已为你打开窗户通风"
 }}
 否则：
@@ -188,7 +199,7 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
             time.sleep(3.0)
 
         # 生成唯一客户端标识
-        device_id = user_message.strip()
+        device_id = user_message.strip()[:6]
 
         # 添加到客户端套接字列表
         client_ip, client_port = client_socket.getpeername()

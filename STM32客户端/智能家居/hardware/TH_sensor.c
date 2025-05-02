@@ -21,7 +21,7 @@ void DHT_init(void)
 返回值：
     void
 */
-static void change_DHT_GPIO_mode(GPIOMode_TypeDef mode)
+static void DHT_change_GPIO_mode(GPIOMode_TypeDef mode)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	GPIO_InitStructure.GPIO_Mode = mode;  // 通过参数形式来控制GPIO的模式
@@ -42,13 +42,13 @@ static void change_DHT_GPIO_mode(GPIOMode_TypeDef mode)
 static uint8_t DHT_start_signal(void)
 {
     // 主机拉低总线 >18ms，通知DHT11开始通信
-	change_DHT_GPIO_mode(GPIO_Mode_Out_PP); // 推挽输出模式
+	DHT_change_GPIO_mode(GPIO_Mode_Out_PP); // 推挽输出模式
 	GPIO_ResetBits(GPIOB, GPIO_Pin_1);      // 主机控制单总线输出20ms低电平
 	vTaskDelay(pdMS_TO_TICKS(20));
 
     // 释放总线，输出高电平, 总线由上拉电阻拉高
     GPIO_SetBits(GPIOB, GPIO_Pin_1);        // 主机释放总线
-	change_DHT_GPIO_mode(GPIO_Mode_Out_OD); // 配置为开漏输出模式
+	DHT_change_GPIO_mode(GPIO_Mode_Out_OD); // 配置为开漏输出模式
 	delay_us(20);                           // 延时等待20-40us后, 读取DHT11的响应信号
 
     // 等待应答
@@ -73,7 +73,7 @@ static uint8_t DHT_get_byte_data(void)
 	uint8_t temp;
 
     // 每一bit数据都以50us低电平开始,高电平的长短决定了数据位是0 (26-28us) 还是 1 (70us)
-	for(int i = 0; i < 8; i++){
+	for(uint8_t i = 0; i < 8; i++){
 		temp <<= 1; // 高位先出
 		while(!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1)); // 主机等待50~58μs的低电平结束
 		delay_us(28);  // 等待26-28μs的高电平结束
@@ -129,7 +129,7 @@ uint8_t DHT_get_temp_humi_data(float *humidity, float *temperature)
 	}
 }
 
-void show_DHT_sensor_value_OLED(uint8_t line, uint8_t column)
+void DHT_sensor_show_value_to_OLED(uint8_t line, uint8_t column)
 {
 	float humidity = 0.0, temperature = 0.0;
 

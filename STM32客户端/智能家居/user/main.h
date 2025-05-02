@@ -7,16 +7,16 @@
 #include <stdio.h>
 
 #include "FreeRTOS.h"        // FreeRTOS 核心配置和类型定义
-#include "FreeRTOSConfig.h"  // FreeRTOS 用户配置文件（必须与项目路径匹配）
-#include "semphr.h"          // 信号量操作（如果使用互斥锁、二进制信号量等）
+#include "FreeRTOSConfig.h"  // FreeRTOS 用户配置文件
+#include "semphr.h"          // 信号量操作
 
-#include "croutine.h"        // 协程（如果启用 configUSE_CO_ROUTINES）
-#include "event_groups.h"    // 事件组（如果使用事件标志）
-#include "list.h"            // 列表操作（如果使用任务列表）
-#include "queue.h"           // 队列操作（如果使用队列或任务间通信）
-#include "stream_buffer.h"   // 流缓冲区（如果使用流缓冲区）
-#include "task.h"            // 任务管理相关 API（如 xTaskCreate, vTaskStartScheduler 等）
-#include "timers.h"          // 软件定时器（如果启用 configUSE_TIMERS）
+#include "croutine.h"        // 协程
+#include "event_groups.h"    // 事件组
+#include "list.h"            // 任务列表操作
+#include "queue.h"           // 队列操作
+#include "stream_buffer.h"   // 流缓冲区
+#include "task.h"            // 任务管理相关 API, 如 xTaskCreate, vTaskStartScheduler 等
+#include "timers.h"          // 软件定时器
 
 #include "delay.h"
 #include "IWDG.h"
@@ -57,7 +57,14 @@ typedef enum
     SENSOR_MESSAGE = 22, // 传感器消息
     DEVICE_MESSAGE = 23, // 设备控制消息
     IGNORE_MESSAGE = 24, // 忽略消息
-}AI_MESSAGE_TYPE;
+}ai_message_type_t;
+
+typedef enum
+{
+    BUZZER_PRE_WARN_OFF = 0, // 预警解除
+    BUZZER_PRE_WARN_1,       // 一级预警
+    BUZZER_PRE_WARN_2,       // 二级预警
+}alarm_status_t;
 
 void monitor_task(void *task_params);
 

@@ -8,10 +8,10 @@
 
 void light_sensor_init(void);
 
-float get_light_sensor_value(void);
+float light_sensor_get_value(void);
 
-float get_light_sensor_voltage_value(void);
+float light_sensor_get_voltage_value(void);
 
-void show_light_sensor_value_OLED(uint8_t line, uint8_t column);
+void light_sensor_show_value_to_OLED(uint8_t line, uint8_t column);
 
 #endif

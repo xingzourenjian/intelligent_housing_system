@@ -14,7 +14,7 @@ int main(int argc, const char *argv[])
     system_init();
 
     if(RCC_GetFlagStatus(RCC_FLAG_IWDGRST) == SET){ // 独立看门狗复位
-        buzzer_up();
+        buzzer_on();
         delay_ms(500);
         buzzer_off();
         RCC_ClearFlag(); // 清除复位标志位
@@ -56,10 +56,10 @@ void monitor_task(void *task_params)
         }
 
         // 处理AI设备控制消息
-        char *ai_response = get_ESP01S_message();
-        if(ai_response != NULL && judge_ai_message_type(ai_response) == DEVICE_MESSAGE){
-            process_ai_device_control_cmd(ai_response);
-            clean_ESP01S_message();
+        char *ai_response = ESP01S_get_message();
+        if(ai_response != NULL && ESP01S_judge_ai_message_type(ai_response) == DEVICE_MESSAGE){
+            ESP01S_process_ai_message(ai_response);
+            ESP01S_clean_message();
         }
         vTaskDelay(pdMS_TO_TICKS(300)); // 检查一次
     }
@@ -85,18 +85,18 @@ void ai_cloud_control_task(void *task_params)
     // 与服务端握手
     printf("21\r\n"); // 告诉服务端我的设备id
     while(1){
-        char *ai_response = get_ESP01S_message();
-        if(ai_response != NULL && judge_ai_message_type(ai_response) == NORMAL_MESSAGE){ // AI招呼语
-            clean_ESP01S_message();
+        char *ai_response = ESP01S_get_message();
+        if(ai_response != NULL && ESP01S_judge_ai_message_type(ai_response) == NORMAL_MESSAGE){ // AI招呼语
+            ESP01S_clean_message();
             break; // 握手成功，退出循环
         }
         vTaskDelay(pdMS_TO_TICKS(300)); // 检查一次
     }
     printf("{\"device_type\": \"ESP01S\"}\r\n");  // 告诉服务端我的设备类型
     while(1){
-        char *ai_response = get_ESP01S_message();
-        if(ai_response != NULL && judge_ai_message_type(ai_response) == NORMAL_MESSAGE){
-            clean_ESP01S_message();
+        char *ai_response = ESP01S_get_message();
+        if(ai_response != NULL && ESP01S_judge_ai_message_type(ai_response) == NORMAL_MESSAGE){
+            ESP01S_clean_message();
             break;
         }
         vTaskDelay(pdMS_TO_TICKS(300));
@@ -110,9 +110,9 @@ void ai_cloud_control_task(void *task_params)
             hearbeat_count = 0;
             printf("heartbeat\r\n");
             vTaskDelay(pdMS_TO_TICKS(2000)); // 最少2s
-            char *ai_response = get_ESP01S_message();
-            if(ai_response != NULL && judge_ai_message_type(ai_response) == NORMAL_MESSAGE){
-                clean_ESP01S_message();
+            char *ai_response = ESP01S_get_message();
+            if(ai_response != NULL && ESP01S_judge_ai_message_type(ai_response) == NORMAL_MESSAGE){
+                ESP01S_clean_message();
             }
             else{
                 break; // 心跳包超时，退出循环
@@ -121,9 +121,9 @@ void ai_cloud_control_task(void *task_params)
 
         // 获取传感器数据
         DHT_get_temp_humi_data(&sensor_data.humidity, &sensor_data.temperature);
-        sensor_data.smoke = get_MQ2_sensor_value();
-        sensor_data.co = get_MQ7_sensor_value();
-        sensor_data.light = get_light_sensor_value();
+        sensor_data.smoke = MQ2_get_sensor_value();
+        sensor_data.co = MQ7_get_sensor_value();
+        sensor_data.light = light_sensor_get_value();
 
         // 发送数据到ESP01S模块
         printf("温度:%.1f, 湿度:%.1f, 烟雾:%.1f, 一氧化碳:%.1f, 光照:%.1f\r\n",
@@ -147,6 +147,7 @@ void ai_cloud_control_task(void *task_params)
 void local_edge_control_task(void *task_params)
 {
     sensor_data_node sensor_data; // 传感器数据
+    uint8_t alarm_count = 0; // 预警触发时机
 
     memset(&sensor_data, 0, sizeof(sensor_data_node));
 
@@ -159,41 +160,51 @@ void local_edge_control_task(void *task_params)
 
         // 获取传感器数据
         DHT_get_temp_humi_data(&sensor_data.humidity, &sensor_data.temperature);
-        sensor_data.smoke = get_MQ2_sensor_value();
-        sensor_data.co = get_MQ7_sensor_value();
-        sensor_data.light = get_light_sensor_value();
+        sensor_data.smoke = MQ2_get_sensor_value();
+        sensor_data.co = MQ7_get_sensor_value();
+        sensor_data.light = light_sensor_get_value();
 
         // 预警
-        if(sensor_data.temperature > 39 || sensor_data.smoke > 5 || sensor_data.co > 3){ // 一级预警
-            servo_window_up();      // 打开窗户
-            motor_front_turn();     // 打开排风扇
-            close_all_alarm_led();  // 关闭所有警报灯
-            led_yellow_up();        // 亮黄灯
-            buzzer_up();            // 打开警报
-            vTaskDelay(pdMS_TO_TICKS(500));
-            buzzer_off();
-            buzzer_up();
-            vTaskDelay(pdMS_TO_TICKS(500));
-            buzzer_off();
-            buzzer_up();
-            vTaskDelay(pdMS_TO_TICKS(500));
-            buzzer_off();
+        if((sensor_data.temperature >= 38 && sensor_data.temperature < 40) ||
+            (sensor_data.smoke >= 5 && sensor_data.smoke < 8) ||
+            (sensor_data.co >= 3 && sensor_data.co < 6)){ // 一级预警
+            if(++alarm_count > 3){ // 预警触发时机
+                alarm_count = 0;
+                servo_window_on();      // 打开窗户
+                motor_front_turn();     // 打开排风扇
+                led_close_all_alarm();  // 关闭所有警报灯
+                led_yellow_on();        // 亮黄灯
+                buzzer_on();            // 打开警报
+                vTaskDelay(pdMS_TO_TICKS(500));
+                buzzer_off();
+                vTaskDelay(pdMS_TO_TICKS(500));
+                buzzer_on();
+                vTaskDelay(pdMS_TO_TICKS(500));
+                buzzer_off();
+                vTaskDelay(pdMS_TO_TICKS(500));
+                buzzer_on();
+                vTaskDelay(pdMS_TO_TICKS(500));
+                buzzer_off();
+            }
         }
-        else if(sensor_data.temperature > 42 || sensor_data.smoke > 8 || sensor_data.co > 6){ // 二级预警
-            servo_window_up();
-            motor_front_turn();
-            close_all_alarm_led();
-            led_red_up();
-            buzzer_up();
+        else if((sensor_data.temperature >= 40 && sensor_data.temperature < 45) || sensor_data.smoke >= 8 || sensor_data.co >= 6){ // 二级预警
+            if(++alarm_count > 3){ // 预警触发时机
+                alarm_count = 0;
+                servo_window_on();
+                motor_front_turn();
+                led_close_all_alarm();
+                led_red_on();
+                buzzer_on();
+            }
         }
 
         // 语音识别
-        char *asr_response = get_ASRPRO_message();
+        char *asr_response = ASRPRO_get_message();
         if(asr_response != NULL){
             // 处理语音识别消息
-            process_ASRPRO_message(asr_response, sensor_data.temperature, sensor_data.humidity, sensor_data.smoke, sensor_data.co);
+            ASRPRO_process_message(asr_response, sensor_data.temperature, sensor_data.humidity, sensor_data.smoke, sensor_data.co);
             // 语音识别消息处理完成，清空消息
-            clean_ASRPRO_message();
+            ASRPRO_clean_message();
         }
 
         vTaskDelay(pdMS_TO_TICKS(3000));
@@ -232,10 +243,10 @@ void system_init(void)
 // 紧急逃生模式
 void emergency_escape_mode(void)
 {
-    buzzer_up();
-    servo_window_up();
+    buzzer_on();
+    servo_window_on();
     room_lamp_adjust(100);
-    led_red_up();
+    led_red_on();
 }
 
 // 离家模式函数
@@ -264,10 +275,10 @@ void OLED_refresh(char *str)
 {
     // OLED屏显示当前状态
     OLED_ShowString(1, 3, str);
-    show_DHT_sensor_value_OLED(2, 1);
-    show_MQ2_sensor_value_OLED(3, 1);
-    show_MQ7_sensor_value_OLED(3, 9);
-    show_light_sensor_value_OLED(4, 1);
+    DHT_sensor_show_value_to_OLED(2, 1);
+    MQ2_sensor_show_value_to_OLED(3, 1);
+    MQ7_sensor_show_value_to_OLED(3, 9);
+    light_sensor_show_value_to_OLED(4, 1);
 }
 
 // 空闲任务钩子函数，即回调函数

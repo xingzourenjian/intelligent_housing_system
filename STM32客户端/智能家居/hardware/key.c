@@ -52,7 +52,7 @@ void EXTI9_5_IRQHandler(void)
             while(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7) == 0);	//等待按键松手
             delay_ms(20);
 
-			close_all_alarm_led();  // 关闭所有警报灯
+			led_close_all_alarm();  // 关闭所有警报灯
 			buzzer_off();           // 关闭警报
 		}
 		EXTI_ClearITPendingBit(EXTI_Line7);		//清除外部中断n号线的中断标志位

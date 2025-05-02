@@ -2,7 +2,7 @@
 #define __ASRPRO_H__
 
 #include "stm32f10x.h"
-#include <string.h> // 定义了NULL
+#include <string.h>
 
 #include "main.h"
 
@@ -10,12 +10,12 @@
 
 void ASRPRO_init(void);
 
-void send_message_to_ASRPRO_string(char *str);
+void ASRPRO_send_string_message(const char *str); // 发消息给语音模块
 
-char *get_ASRPRO_message(void);
+char *ASRPRO_get_message(void);
 
-void clean_ASRPRO_message(void);
+void ASRPRO_clean_message(void);
 
-void process_ASRPRO_message(char *asr_response, float temperature, float humidity, float smoke, float co);
+void ASRPRO_process_message(const char *asr_response, float temperature, float humidity, float smoke, float co);
 
 #endif

@@ -8,10 +8,10 @@
 
 void MQ2_sensor_init(void);
 
-float get_MQ2_sensor_value(void);
+float MQ2_get_sensor_value(void);
 
-float get_MQ2_sensor_voltage_value(void);
+float MQ2_get_sensor_voltage_value(void);
 
-void show_MQ2_sensor_value_OLED(uint8_t line, uint8_t column);
+void MQ2_sensor_show_value_to_OLED(uint8_t line, uint8_t column);
 
 #endif

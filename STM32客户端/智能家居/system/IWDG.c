@@ -1,4 +1,6 @@
 #include "IWDG.h"
+
+// 初始化独立看门狗
 void IWDG_init(void)
 {
     IWDG_Enable(); // 启动看门狗，隐式使能内部低速时钟 LSI时钟

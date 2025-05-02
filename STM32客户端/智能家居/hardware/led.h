@@ -2,8 +2,6 @@
 #define __LED_H__
 
 #include "stm32f10x.h"
-#include "FreeRTOS.h"
-#include "task.h"
 
 #define LED_ARR 100 // PWM的ARR值，范围0~65535
 #define LED_PSC 720 // PWM的PSC值，范围0~65535
@@ -18,43 +16,43 @@ typedef enum
 {
     LED_OFF = 0,
     LED_ON,
-}LED_STATUS; // LED的状态
+}led_status_t; // LED的状态
 
 void room_lamp_init(void);
 
-void room_lamp_adjust(int adjust_value);
+void room_lamp_adjust(uint8_t adjust_value);
 
-void room_lamp_up(void);
+void room_lamp_on(void);
 
 void room_lamp_off(void);
 
 void led_init(void);
 
-void system_status_led_control(LED_STATUS state);
+void system_status_led_control(led_status_t LED_STATUS);
 
-void system_status_led_up(void);
+void system_status_led_on(void);
 
-void system_status_led_down(void);
+void system_status_led_off(void);
 
-void led_control(uint16_t LED_num, LED_STATUS state);
+void led_control(uint16_t LED_num, led_status_t LED_STATUS);
 
-void led_up(uint16_t LED_num);
+void led_on(uint16_t LED_num);
 
 void led_off(uint16_t LED_num);
 
 void led_flip(uint16_t LED_num);
 
-void close_all_alarm_led(void);
+void led_close_all_alarm(void);
 
-void led_green_up(void);
+void led_green_on(void);
 
 void led_green_off(void);
 
-void led_yellow_up(void);
+void led_yellow_on(void);
 
 void led_yellow_off(void);
 
-void led_red_up(void);
+void led_red_on(void);
 
 void led_red_off(void);
 

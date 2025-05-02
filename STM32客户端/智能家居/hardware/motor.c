@@ -66,18 +66,9 @@ void motor_init(void)
 	PWM_init();
 }
 
-void motor_set_speed(int8_t speed)
+void motor_set_speed(uint8_t speed)
 {
-	if(speed >= 0){
-		GPIO_SetBits(GPIOB, AIN1);   // AIN1=1, AIN2=0, 正转
-		GPIO_ResetBits(GPIOB, AIN2);
-		PWM_set_compare4(speed);
-	}
-	else{
-		GPIO_ResetBits(GPIOB, AIN1);  // AIN1=0, AIN2=1, 反转
-		GPIO_SetBits(GPIOB, AIN2);
-		PWM_set_compare4(-speed);
-	}
+	PWM_set_compare4(speed);
 }
 
 void motor_front_turn(void)

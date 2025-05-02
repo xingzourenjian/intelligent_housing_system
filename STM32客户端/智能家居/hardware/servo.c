@@ -51,20 +51,17 @@ void servo_init(void)
 }
 
 // 设置转向角度限制180°
-void servo_set_angle(float angle)
+void servo_set_angle(uint8_t angle)
 {
 	// 约束角度范围
-	if(angle < 0){
-		angle = 0;
-	}
-	else if(angle > 180){
+	if(angle > 180){
 		angle = 180;
 	}
 
     PWM_set_compare3((2500-500) / (180-0) * angle + 500); // 500/20000*20ms = 0.5ms
 }
 
-void servo_window_up(void)
+void servo_window_on(void)
 {
 	servo_set_angle(150); // 打开窗户
 }
