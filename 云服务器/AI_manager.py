@@ -38,7 +38,7 @@ class AI_manager:
         # 实例方法
         return [
             {"role": "system", "content": ai_order},
-            {"role": "user", "content": "你好呀！"},
+            {"role": "user", "content": "曦曦"},
             # {"role": "assistant", "content": "我......"},
         ]
 
@@ -61,7 +61,9 @@ class AI_manager:
                     model = self.model,
                     messages = message,
                     stream = self.stream,
-                    max_tokens = 4096, # 模型回复最大长度（单位 token）
+                    max_tokens = 4096, # 模型回复最大长度，单位 token
+                    temperature = 1,   # 0~2
+                    # response_format = {"type": "json_object"},
                 )
 
             # 保存回复的消息

@@ -103,10 +103,10 @@ void ai_cloud_control_task(void *task_params)
     }
 
     // 与服务端通信
-    uint8_t hearbeat_count = 0; // 心跳发送时机
+    uint8_t hearbeat_count = 0; // 心跳累计次数
     while(1){
         // 发送心跳包
-        if(++hearbeat_count > 12){
+        if(++hearbeat_count > 21){
             hearbeat_count = 0;
             printf("heartbeat\r\n");
             vTaskDelay(pdMS_TO_TICKS(2000)); // 最少2s
@@ -147,7 +147,8 @@ void ai_cloud_control_task(void *task_params)
 void local_edge_control_task(void *task_params)
 {
     sensor_data_node sensor_data; // 传感器数据
-    uint8_t alarm_count = 0; // 预警触发时机
+    uint8_t alarm_count = 0; // 预警累计次数
+    uint8_t clear_alarm_count = 0; // 清除预警累计的次数
 
     memset(&sensor_data, 0, sizeof(sensor_data_node));
 
@@ -155,6 +156,12 @@ void local_edge_control_task(void *task_params)
     servo_window_off(); // 关闭窗户
 
     while(1){
+        // 清除预警累计的次数
+        if(++clear_alarm_count > 21){
+            clear_alarm_count = 0;
+            alarm_count = 0;
+        }
+
         // 刷新OLED屏幕
         OLED_refresh("Smart Home");
 
@@ -168,7 +175,7 @@ void local_edge_control_task(void *task_params)
         if((sensor_data.temperature >= 38 && sensor_data.temperature < 40) ||
             (sensor_data.smoke >= 5 && sensor_data.smoke < 8) ||
             (sensor_data.co >= 3 && sensor_data.co < 6)){ // 一级预警
-            if(++alarm_count > 3){ // 预警触发时机
+            if(++alarm_count > 3){ // 触发预警
                 alarm_count = 0;
                 servo_window_on();      // 打开窗户
                 motor_front_turn();     // 打开排风扇
@@ -188,7 +195,7 @@ void local_edge_control_task(void *task_params)
             }
         }
         else if((sensor_data.temperature >= 40 && sensor_data.temperature < 45) || sensor_data.smoke >= 8 || sensor_data.co >= 6){ // 二级预警
-            if(++alarm_count > 3){ // 预警触发时机
+            if(++alarm_count > 3){ // 触发预警
                 alarm_count = 0;
                 servo_window_on();
                 motor_front_turn();
