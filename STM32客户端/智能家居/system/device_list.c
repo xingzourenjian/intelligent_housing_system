@@ -22,7 +22,7 @@ device_cmd_t device_cmd_list[] =
     {"sleep_mode", .func.no_param_func = sleep_mode},                       // 睡眠模式
 
     {"window_adjust", .func.one_param_func = servo_set_angle},              // 窗户调节
-    {"fan_adjust", .func.one_param_func = motor_set_speed},                 // 排风扇调节
+    {"fans_adjust", .func.one_param_func = motor_set_speed},                 // 排风扇调节
     {"room_lamp_adjust", .func.one_param_func = room_lamp_adjust},          // 卧室灯调节
 };
 

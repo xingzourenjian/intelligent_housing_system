@@ -17,8 +17,8 @@ device_white_list = {
     '关闭报警器':'buzzer_off',
     '开窗':'window_on',
     '关窗':'window_off',
-    '打开排风扇':'fan_on',
-    '关闭排风扇':'fan_off',
+    '打开排风扇':'fans_on',
+    '关闭排风扇':'fans_off',
     '打开卧室灯':'room_lamp_on',
     '关闭卧室灯':'room_lamp_off',
     '打开黄灯':'yellow_light_on',
@@ -27,7 +27,7 @@ device_white_list = {
     '关闭红灯':'red_light_off',
 
     '窗户调节':'window_adjust(10)',
-    '排风扇调节':'fan_adjust(10)',
+    '排风扇调节':'fans_adjust(10)',
     '卧室灯调节':'room_lamp_adjust(10)',
 }
 

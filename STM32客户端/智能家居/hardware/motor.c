@@ -73,18 +73,24 @@ void motor_set_speed(uint8_t speed)
 
 void motor_front_turn(void)
 {
-    GPIO_SetBits(GPIOB, AIN1);  // AIN1=1, AIN2=0, 正转
-    GPIO_ResetBits(GPIOB, AIN2);
+    GPIO_ResetBits(GPIOB, AIN1); // AIN1=0, AIN2=1, 正转
+    GPIO_SetBits(GPIOB, AIN2);
+
+	motor_set_speed(50);
 }
 
 void motor_back_turn(void)
 {
-    GPIO_ResetBits(GPIOB, AIN1); // AIN1=0, AIN2=1, 反转
-    GPIO_SetBits(GPIOB, AIN2);
+    GPIO_SetBits(GPIOB, AIN1);  // AIN1=1, AIN2=0, 反转
+    GPIO_ResetBits(GPIOB, AIN2);
+
+	motor_set_speed(50);
 }
 
 void motor_no_turn(void)
 {
     GPIO_SetBits(GPIOB, AIN1); // AIN1=1, AIN2=1, 制动
     GPIO_SetBits(GPIOB, AIN2);
+
+	motor_set_speed(0);
 }
