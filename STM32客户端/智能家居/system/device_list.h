@@ -27,4 +27,6 @@ extern device_cmd_t device_cmd_list[]; // 设备指令映射链表
 
 uint16_t device_cmd_list_length(void);
 
+void device_cmd_list_close_all(void);
+
 #endif

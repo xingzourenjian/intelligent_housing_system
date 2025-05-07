@@ -106,7 +106,7 @@ void ai_cloud_control_task(void *task_params)
     uint8_t hearbeat_count = 0; // 心跳累计次数
     while(1){
         // 发送心跳包
-        if(++hearbeat_count > 21){
+        if(++hearbeat_count > 52){
             hearbeat_count = 0;
             printf("heartbeat\r\n");
             vTaskDelay(pdMS_TO_TICKS(2000)); // 最少2s
@@ -173,8 +173,8 @@ void local_edge_control_task(void *task_params)
 
         // 预警
         if((sensor_data.temperature >= 38 && sensor_data.temperature < 40) ||
-            (sensor_data.smoke >= 5 && sensor_data.smoke < 8) ||
-            (sensor_data.co >= 3 && sensor_data.co < 6)){ // 一级预警
+            (sensor_data.smoke >= 21 && sensor_data.smoke < 52) ||
+            (sensor_data.co >= 21 && sensor_data.co < 52)){ // 一级预警
             if(++alarm_count > 3){ // 触发预警
                 alarm_count = 0;
                 servo_window_on();      // 打开窗户
@@ -194,7 +194,7 @@ void local_edge_control_task(void *task_params)
                 buzzer_off();
             }
         }
-        else if((sensor_data.temperature >= 40 && sensor_data.temperature < 45) || sensor_data.smoke >= 8 || sensor_data.co >= 6){ // 二级预警
+        else if((sensor_data.temperature >= 40 && sensor_data.temperature < 52) || sensor_data.smoke >= 52 || sensor_data.co >= 52){ // 二级预警
             if(++alarm_count > 3){ // 触发预警
                 alarm_count = 0;
                 servo_window_on();

@@ -22,12 +22,24 @@ device_cmd_t device_cmd_list[] =
     {"sleep_mode", .func.no_param_func = sleep_mode},                       // 睡眠模式
 
     {"window_adjust", .func.one_param_func = servo_set_angle},              // 窗户调节
-    {"fans_adjust", .func.one_param_func = motor_set_speed},                 // 排风扇调节
+    {"fans_adjust", .func.one_param_func = motor_set_speed},                // 排风扇调节
     {"room_lamp_adjust", .func.one_param_func = room_lamp_adjust},          // 卧室灯调节
+
+    {"close_all_device", .func.no_param_func = device_cmd_list_close_all},  // 关闭所有设备
 };
 
 // 获取设备指令映射链表长度
 uint16_t device_cmd_list_length(void)
 {
     return sizeof(device_cmd_list) / sizeof(device_cmd_t);
+}
+
+void device_cmd_list_close_all(void)
+{
+    buzzer_off();
+    servo_window_off();
+    motor_no_turn();
+    room_lamp_off();
+    led_yellow_off();
+    led_red_off();
 }
