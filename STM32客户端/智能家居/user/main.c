@@ -8,6 +8,9 @@ TaskHandle_t monitor_task_handle = NULL; // 监控任务句柄
 // 其他句柄
 QueueHandle_t cloud_status_queue_handle = NULL; // 云端连接状态消息队列句柄
 
+uint8_t OLED_interface_flag = 0; // OLED页面切换标志位
+static uint8_t refresh_flag = 0;      // OLED数据刷新标志位
+
 int main(int argc, const char *argv[])
 {
     // 系统初始化
@@ -47,11 +50,13 @@ void monitor_task(void *task_params)
     memset(&cloud_status_msg, 0, sizeof(cloud_status_node));
 
     while(1){
-        // 判断云端连接状态
+        // 云端连接状态
         if(xQueueReceive(cloud_status_queue_handle, &cloud_status_msg, 0) == pdPASS){
             if(cloud_status_msg.status == 0){
                 system_status_led_control(LED_OFF); // 云端断开连接，关闭指示灯
-                break; // 云端断开连接，退出循环
+            }
+            else if(cloud_status_msg.status == 1){
+                system_status_led_control(LED_ON);
             }
         }
 
@@ -61,6 +66,33 @@ void monitor_task(void *task_params)
             ESP01S_process_ai_message(ai_response);
             ESP01S_clean_message();
         }
+
+        // 处理语音识别消息
+        char *asr_response = ASRPRO_get_message();
+        if(asr_response != NULL){
+            sensor_data_node sensor_data;
+            DHT_get_temp_humi_data(&sensor_data.humidity, &sensor_data.temperature);
+            sensor_data.smoke = MQ2_get_sensor_value();
+            sensor_data.co = MQ7_get_sensor_value();
+            ASRPRO_process_message(asr_response, sensor_data.temperature, sensor_data.humidity, sensor_data.smoke, sensor_data.co);
+            // 语音识别消息处理完成，清空消息
+            ASRPRO_clean_message();
+        }
+
+        // OLED页面切换
+        if(OLED_interface_flag == 1){
+            OLED_interface_flag = 0;
+			if(refresh_flag == 1){
+				OLED_main_interface();
+				refresh_flag = 0; // 切换到主界面
+			}
+			else if(refresh_flag == 0){
+				OLED_two_interface();
+				refresh_flag = 1;
+			}
+            OLED_refresh(refresh_flag);
+        }
+
         vTaskDelay(pdMS_TO_TICKS(300)); // 检查一次
     }
 
@@ -134,7 +166,7 @@ void ai_cloud_control_task(void *task_params)
             sensor_data.light
         );
 
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
     cloud_status_msg.status = 0; // 云端断开连接
@@ -152,7 +184,6 @@ void local_edge_control_task(void *task_params)
 
     memset(&sensor_data, 0, sizeof(sensor_data_node));
 
-    OLED_Clear(); // 清空OLED屏幕
     servo_window_off(); // 关闭窗户
 
     while(1){
@@ -163,7 +194,7 @@ void local_edge_control_task(void *task_params)
         }
 
         // 刷新OLED屏幕
-        OLED_refresh("Smart Home");
+        OLED_refresh(refresh_flag);
 
         // 获取传感器数据
         DHT_get_temp_humi_data(&sensor_data.humidity, &sensor_data.temperature);
@@ -194,7 +225,8 @@ void local_edge_control_task(void *task_params)
                 buzzer_off();
             }
         }
-        else if((sensor_data.temperature >= 40 && sensor_data.temperature < 52) || sensor_data.smoke >= 52 || sensor_data.co >= 52){ // 二级预警
+        else if((sensor_data.temperature >= 40 && sensor_data.temperature < 52) ||
+            sensor_data.smoke >= 52 || sensor_data.co >= 52){ // 二级预警
             if(++alarm_count > 3){ // 触发预警
                 alarm_count = 0;
                 servo_window_on();
@@ -205,16 +237,7 @@ void local_edge_control_task(void *task_params)
             }
         }
 
-        // 语音识别
-        char *asr_response = ASRPRO_get_message();
-        if(asr_response != NULL){
-            // 处理语音识别消息
-            ASRPRO_process_message(asr_response, sensor_data.temperature, sensor_data.humidity, sensor_data.smoke, sensor_data.co);
-            // 语音识别消息处理完成，清空消息
-            ASRPRO_clean_message();
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(3000));
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 
     // vTaskDelete(NULL);  // 自毁任务
@@ -240,6 +263,7 @@ void system_init(void)
     servo_init();
 
     OLED_Init();
+    OLED_main_interface(); // 显示主界面
 
     key_init();
     ASRPRO_init();
@@ -278,14 +302,20 @@ void sleep_mode(void)
 }
 
 // OLED刷新函数
-void OLED_refresh(char *str)
+void OLED_refresh(uint8_t refresh_flag)
 {
-    // OLED屏显示当前状态
-    OLED_ShowString(1, 3, str);
-    DHT_sensor_show_value_to_OLED(2, 1);
-    MQ2_sensor_show_value_to_OLED(3, 1);
-    MQ7_sensor_show_value_to_OLED(3, 9);
-    light_sensor_show_value_to_OLED(4, 1);
+    if(refresh_flag == 0){
+        OLED_ClearArea(48, 16, 128-48, 64-16); // 清除数据
+        DHT_sensor_show_value_to_OLED();    // 显示温湿度
+        light_sensor_show_value_to_OLED();  // 显示光照强度
+    }
+    else if(refresh_flag == 1){
+        OLED_ClearArea(48, 16, 128-48, 64-16-32); // 数据各清各的
+        OLED_ClearArea(80, 32, 128-80, 64-32-16);
+        MQ2_sensor_show_value_to_OLED();    // 显示烟雾浓度
+        MQ7_sensor_show_value_to_OLED();    // 显示一氧化碳浓度
+    }
+    OLED_Update();
 }
 
 // 空闲任务钩子函数，即回调函数

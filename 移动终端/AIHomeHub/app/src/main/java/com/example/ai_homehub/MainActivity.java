@@ -31,7 +31,7 @@ import org.json.JSONObject;
 
 public class MainActivity extends AppCompatActivity {
     // 服务器配置常量
-    private static final String SERVER_IP = "47.86.228.121";  // 服务器IP地址（需要替换为实际地址）
+    private static final String SERVER_IP = "1.95.193.57";  // 服务器IP地址（需要替换为实际地址）
     private static final int SERVER_PORT = 8086;              // 服务器端口号（与服务器保持一致）
     private static final int PERMISSION_REQUEST_CODE = 100;   // 权限请求的识别码
 

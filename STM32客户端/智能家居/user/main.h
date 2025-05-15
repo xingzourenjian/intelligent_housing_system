@@ -66,6 +66,8 @@ typedef enum
     BUZZER_PRE_WARN_2,       // 二级预警
 }alarm_status_t;
 
+extern uint8_t OLED_interface_flag;
+
 void monitor_task(void *task_params);
 
 void ai_cloud_control_task(void *task_params);
@@ -82,6 +84,6 @@ void recreation_mode(void); // 娱乐模式函数
 
 void sleep_mode(void); // 睡眠模式
 
-void OLED_refresh(char *str);
+void OLED_refresh(uint8_t refresh_flag);
 
 #endif

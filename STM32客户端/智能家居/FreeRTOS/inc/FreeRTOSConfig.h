@@ -67,7 +67,7 @@
 
 /*============================= 处理器适配配置 ===============================*/
 #define xPortPendSVHandler    PendSV_Handler  // 挂起服务例程别名
-#define vPortSVCHandler       SVC_Handler    // 系统调用处理程序别名
+#define vPortSVCHandler       SVC_Handler     // 系统调用处理程序别名
 
 /*============================== 数据类型定义 ==================================*/
 #define configSTACK_DEPTH_TYPE          uint16_t  // 任务堆栈深度数据类型

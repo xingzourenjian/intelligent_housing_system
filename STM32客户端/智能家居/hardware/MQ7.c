@@ -75,12 +75,11 @@ float MQ7_get_sensor_voltage_value(void)
     return 1.0 * ADC_get_value(ADC_Channel_8) / 4095 * 3.3;
 }
 
-void MQ7_sensor_show_value_to_OLED(uint8_t line, uint8_t column)
+void MQ7_sensor_show_value_to_OLED(void)
 {
     float value = MQ7_get_sensor_value();
 
-    OLED_ShowString(line, column, "co:");
-    OLED_ShowNum(line, column+3, (uint32_t)value, 2);
-    OLED_ShowChar(line, column+5, '.');
-    OLED_ShowNum(line, column+6, (uint32_t)(value * 10) % 10, 1);
+    OLED_ShowNum(80, 32, (uint32_t)value, 2, OLED_8X16);
+    OLED_ShowChar(80+16, 32, '.', OLED_8X16);
+    OLED_ShowNum(80+24, 32, (uint32_t)(value * 10) % 10, 1, OLED_8X16);
 }

@@ -12,6 +12,6 @@ float MQ2_get_sensor_value(void);
 
 float MQ2_get_sensor_voltage_value(void);
 
-void MQ2_sensor_show_value_to_OLED(uint8_t line, uint8_t column);
+void MQ2_sensor_show_value_to_OLED(void);
 
 #endif

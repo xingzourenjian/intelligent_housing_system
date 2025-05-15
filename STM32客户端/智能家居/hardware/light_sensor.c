@@ -76,12 +76,11 @@ float light_sensor_get_voltage_value(void)
     return 1.0 * ADC_get_value(ADC_Channel_5) / 4095 * 3.3;
 }
 
-void light_sensor_show_value_to_OLED(uint8_t line, uint8_t column)
+void light_sensor_show_value_to_OLED(void)
 {
     float value = light_sensor_get_value();
 
-    OLED_ShowString(line, column, "light:");
-    OLED_ShowNum(line, column+6, (uint32_t)value, 2);
-    OLED_ShowChar(line, column+8, '.');
-    OLED_ShowNum(line, column+9, (uint32_t)(value * 10) % 10, 1);
+    OLED_ShowNum(48, 48, (uint32_t)value, 2, OLED_8X16);
+    OLED_ShowChar(48+16, 48, '.', OLED_8X16);
+    OLED_ShowNum(48+24, 48, (uint32_t)(value * 10) % 10, 1, OLED_8X16);
 }

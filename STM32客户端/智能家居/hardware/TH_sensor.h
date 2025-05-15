@@ -13,6 +13,6 @@ void DHT_init(void);
 
 uint8_t DHT_get_temp_humi_data(float *humidity, float *temperature);
 
-void DHT_sensor_show_value_to_OLED(uint8_t line, uint8_t column);
+void DHT_sensor_show_value_to_OLED(void);
 
 #endif

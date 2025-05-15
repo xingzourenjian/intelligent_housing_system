@@ -42,22 +42,22 @@ static void DHT_change_GPIO_mode(GPIOMode_TypeDef mode)
 static uint8_t DHT_start_signal(void)
 {
     // 主机拉低总线 >18ms，通知DHT11开始通信
-	DHT_change_GPIO_mode(GPIO_Mode_Out_PP); // 推挽输出模式
+	DHT_change_GPIO_mode(GPIO_Mode_Out_PP);
 	GPIO_ResetBits(GPIOB, GPIO_Pin_1);      // 主机控制单总线输出20ms低电平
 	vTaskDelay(pdMS_TO_TICKS(20));
 
     // 释放总线，输出高电平, 总线由上拉电阻拉高
     GPIO_SetBits(GPIOB, GPIO_Pin_1);        // 主机释放总线
-	DHT_change_GPIO_mode(GPIO_Mode_Out_OD); // 配置为开漏输出模式
+	DHT_change_GPIO_mode(GPIO_Mode_Out_OD);
 	delay_us(20);                           // 延时等待20-40us后, 读取DHT11的响应信号
 
     // 等待应答
 	if(!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1)){ 		  // 判断DHT11是否进入应答模式
 		while(!GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1)); // DHT11 发送80us低电平响应信号
         while(GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1));  // DHT11 再把总线拉高80us, 准备发送数据
-		return 1; // 返回1表示应答成功
+		return 1;
 	}
-	return 0;     // 返回0表示应答失败
+	return 0;
 }
 
 /*
@@ -129,20 +129,19 @@ uint8_t DHT_get_temp_humi_data(float *humidity, float *temperature)
 	}
 }
 
-void DHT_sensor_show_value_to_OLED(uint8_t line, uint8_t column)
+void DHT_sensor_show_value_to_OLED(void)
 {
 	float humidity = 0.0, temperature = 0.0;
 
 	DHT_get_temp_humi_data(&humidity, &temperature); // 获取温湿度数据
-	OLED_ShowString(line, column, "H:");
-	OLED_ShowNum(line, column+2, (uint32_t)humidity, 2); // 显示湿度整数部分
-	OLED_ShowChar(line, column+4, '.');
-	OLED_ShowNum(line, column+5, (uint32_t)(humidity * 10) % 10, 1); // 显示湿度小数部分
-	OLED_ShowString(line, column+6, "%"); // 显示百分号
 
-	OLED_ShowString(line, column+8, "T:");
-	OLED_ShowNum(line, column+10, (uint32_t)temperature, 2); // 显示温度整数部分
-	OLED_ShowChar(line, column+12, '.');
-	OLED_ShowNum(line, column+13, (uint32_t)(temperature * 10) % 10, 1); // 显示温度小数部分
-	OLED_ShowString(line, column+14, "C"); // 显示摄氏度符号
+	OLED_ShowNum(48, 16, (uint32_t)temperature, 2, OLED_8X16); // 显示整数部分
+	OLED_ShowChar(48+16, 16, '.', OLED_8X16);
+	OLED_ShowNum(48+24, 16, (uint32_t)(temperature * 10) % 10, 1, OLED_8X16); // 显示小数部分
+	OLED_ShowString(48+32, 16, "C", OLED_8X16);
+
+	OLED_ShowNum(48, 32, (uint32_t)humidity, 2, OLED_8X16);
+	OLED_ShowChar(48+16, 32, '.', OLED_8X16);
+	OLED_ShowNum(48+24, 32, (uint32_t)(humidity * 10) % 10, 1, OLED_8X16);
+	OLED_ShowString(48+32, 32, "%", OLED_8X16);
 }

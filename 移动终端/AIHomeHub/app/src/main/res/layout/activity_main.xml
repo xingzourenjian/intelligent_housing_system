@@ -17,7 +17,7 @@
         android:id="@+id/tv_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="轻歌家居"
+        android:text="姓名：汪毅\n学籍号：2021052992\n专业：物联网工程\n指导老师：李正华"
         android:textSize="24sp"
         android:textColor="@color/primary"
         android:textStyle="bold"

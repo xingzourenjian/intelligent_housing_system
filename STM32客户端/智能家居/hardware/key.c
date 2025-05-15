@@ -80,7 +80,7 @@ void EXTI1_IRQHandler(void)
             while(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_1) == 0);	//等待按键松手
             delay_ms(20);
 
-			awary_mode(); // 离家模式函数
+			OLED_interface_flag = 1; // 切换OLED界面
 		}
 		EXTI_ClearITPendingBit(EXTI_Line1);		//清除外部中断n号线的中断标志位
 	}
