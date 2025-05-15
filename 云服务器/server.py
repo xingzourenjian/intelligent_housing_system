@@ -47,7 +47,7 @@ sensor_value_cutoff = {
     '湿度':88.0,
     '烟雾':21.0,
     '一氧化碳':21.0,
-    '光照':66.0,
+    # '光照':66.0,
 }
 
 # AI 提示词指令
@@ -276,6 +276,7 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
                         if sensor_data_cleaned_dict: # 有传感器数据超过阈值了
                             sensor_data_cutoff_count += 1
                             if sensor_data_cutoff_count == 3: # 不拦截
+                                print(f"用户 IP: {client_ip}, 端口: {client_port} 的消息：{user_message}")
                                 sensor_data_cutoff_count = 0
                                 user_message = json.dumps(sensor_data_cleaned_dict, ensure_ascii=False)
                             else:

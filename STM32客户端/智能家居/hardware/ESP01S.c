@@ -189,7 +189,7 @@ void ESP01S_init(void)
     // 连接服务器
     while(!ESP01S_send_cmd("AT+CIPMUX=0\r\n", 500)); // 单路连接模式
     UART3_clean_rx_packet();
-    while(!ESP01S_send_cmd("AT+CIPSTART=\"TCP\",\"47.86.228.121\",8086\r\n", 1000)); // 建立TCP连接
+    while(!ESP01S_send_cmd("AT+CIPSTART=\"TCP\",\"1.95.193.57\",8086\r\n", 1000)); // 建立TCP连接
     UART3_clean_rx_packet();
 
     // 进入透传模式

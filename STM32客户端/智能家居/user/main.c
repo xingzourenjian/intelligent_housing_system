@@ -96,7 +96,7 @@ void monitor_task(void *task_params)
         vTaskDelay(pdMS_TO_TICKS(300)); // 检查一次
     }
 
-    vTaskDelete(NULL);  // 自毁任务
+    // vTaskDelete(NULL);  // 自毁任务
 }
 
 // AI云端控制任务函数
@@ -166,7 +166,7 @@ void ai_cloud_control_task(void *task_params)
             sensor_data.light
         );
 
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        vTaskDelay(pdMS_TO_TICKS(2000));
     }
 
     cloud_status_msg.status = 0; // 云端断开连接
@@ -237,7 +237,7 @@ void local_edge_control_task(void *task_params)
             }
         }
 
-        vTaskDelay(pdMS_TO_TICKS(1000));
+        vTaskDelay(pdMS_TO_TICKS(2000));
     }
 
     // vTaskDelete(NULL);  // 自毁任务
