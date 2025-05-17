@@ -26,15 +26,15 @@ class AI_manager:
             func_name = cmd.split('(')[0].strip().lower()
             self.allowed_commands.add(func_name)
 
-    """
-    功能：
-        将AI初始化消息 初始化为 默认对话记录
-    参数：
-        ai_order: AI提示词，字符串
-    返回值：
-        AI初始化消息，字典型列表
-    """
     def init_message(self, ai_order: str) -> list:
+        """
+        功能：
+            将AI初始化消息 初始化为 默认对话记录
+        参数：
+            ai_order: AI提示词，字符串
+        返回值：
+            AI初始化消息，字典型列表
+        """
         # 实例方法
         return [
             {"role": "system", "content": ai_order},
@@ -42,16 +42,16 @@ class AI_manager:
             # {"role": "assistant", "content": "我......"},
         ]
 
-    """
-    功能：
-        获取 AI大模型 回复
-    参数：
-        message：AI初始化消息，字典型列表
-    返回值：
-        成功：AI回复的消息，字典型的JSON字符串
-        失败：{"code": 21, "action": {}, "message": "AI服务暂时不可用"}，字典型的JSON字符串
-    """
     def get_response(self, message: list) -> str:
+        """
+        功能：
+            获取 AI大模型 回复
+        参数：
+            message：AI初始化消息，字典型列表
+        返回值：
+            成功：AI回复的消息，字典型的JSON字符串
+            失败：{"code": 21, "action": {}, "message": "AI服务暂时不可用"}，字典型的JSON字符串
+        """
         try:
             response_message = "" # 用于保存回复的消息，字典型的JSON字符串
 
@@ -79,16 +79,16 @@ class AI_manager:
             print(f"get_response API 请求错误：{str(e)}")
             return json.dumps({"code": {MESSAGE_TYPE.NORMAL.value}, "action": {}, "message": "AI服务暂时不可用"})
 
-    """
-    功能：
-        验证并过滤AI的设备操作指令
-    参数：
-        action：AI指令，字典
-    返回值：
-        成功：过滤后的安全指令，字典
-        失败：{}
-    """
     def validate_device_actions(self, action: dict) -> dict:
+        """
+        功能：
+            验证并过滤AI的设备操作指令
+        参数：
+            action：AI指令，字典
+        返回值：
+            成功：过滤后的安全指令，字典
+            失败：{}
+        """
         safe_action = {}
 
         # 验证字典格式
@@ -109,16 +109,16 @@ class AI_manager:
 
         return safe_action
 
-    """
-    功能：
-        处理AI回复的消息，过滤设备指令和封装消息格式
-    参数：
-        response_message: AI回复的消息，字典型的JSON字符串
-    返回值：
-        成功：处理后的消息，字典
-        失败：{"code": 21, "action": {}, "message": "AI服务暂不可用"}，字典
-    """
     def handle_response(self, response_message: str) -> dict:
+        """
+        功能：
+            处理AI回复的消息，过滤设备指令和封装消息格式
+        参数：
+            response_message: AI回复的消息，字典型的JSON字符串
+        返回值：
+            成功：处理后的消息，字典
+            失败：{"code": 21, "action": {}, "message": "AI服务暂不可用"}，字典
+        """
         try:
             # 解析AI回复的消息
             response_message_str = json.loads(response_message)  # 解析JSON，字典
@@ -145,16 +145,16 @@ class AI_manager:
             print(f"handle_response : {str(e)}")
             return {"code": MESSAGE_TYPE.NORMAL.value, "action": {}, "message": "AI服务暂不可用"}
 
-    """
-    功能：
-        AI初始化消息，加载历史对话记录
-    参数：
-        ai_order：AI提示词，字符串
-        filename：要加载的文件
-    返回值：
-        AI初始化消息，字典型列表
-    """
     def load_history_message(self, ai_order: str, filename: str) -> list:
+        """
+        功能：
+            AI初始化消息，加载历史对话记录
+        参数：
+            ai_order：AI提示词，字符串
+            filename：要加载的文件
+        返回值：
+            AI初始化消息，字典型列表
+        """
         with self.history_file_lock: # 加锁，防止多线程同时读写文件导致数据损坏
             try:
                 # 打开历史记录文件
@@ -176,16 +176,16 @@ class AI_manager:
                     json.dump(init_message_list, f, ensure_ascii=False, indent=4)
                 return init_message_list
 
-    """
-    功能：
-        将字典型的json字符串格式的消息，保存到历史对话记录文件
-    参数：
-        new_message：字典型的json字符串
-        filename：要加载的文件
-    返回值：
-        void
-    """
     def save_message_to_history(self, new_message: str, filename: str) -> None:
+        """
+        功能：
+            将字典型的json字符串格式的消息，保存到历史对话记录文件
+        参数：
+            new_message：字典型的json字符串
+            filename：要加载的文件
+        返回值：
+            void
+        """
         try:
             message_dict = json.loads(new_message) # 解析json字符串
 
@@ -216,15 +216,15 @@ class AI_manager:
         except Exception as e:
             print(f"save_message_to_history 消息保存到历史对话记录文件失败：{str(e)}")
 
-    """
-    功能：
-        清理陈旧历史对话记录文件
-    参数：
-        days：保留天数，默认30天
-    返回值：
-        已删除的文件数
-    """
     def clean_old_histories(self, days: int = 30) -> int:
+        """
+        功能：
+            清理陈旧历史对话记录文件
+        参数：
+            days：保留天数，默认30天
+        返回值：
+            已删除的文件数
+        """
         delete_count = 0
 
         for filename in os.listdir(): # 遍历当前目录下的所有文件和文件夹
@@ -252,15 +252,15 @@ class AI_manager:
 
         return delete_count
 
-    """
-    功能：
-        清除所有历史对话记录文件
-    参数：
-        void
-    返回值：
-        已删除的文件数
-    """
     def clean_all_histories(self) -> int:
+        """
+        功能：
+            清除所有历史对话记录文件
+        参数：
+            void
+        返回值：
+            已删除的文件数
+        """
         delete_count = 0
 
         for filename in os.listdir(): # 遍历当前目录下的所有文件和文件夹

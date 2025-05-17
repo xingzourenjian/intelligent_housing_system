@@ -125,16 +125,16 @@ model="doubao-1.5-pro-256k-250115"
 client = OpenAI(api_key = api_key, base_url = base_url)
 stream = False # True：流式输出 默认是False：非流式输出
 
-"""
-功能：
-    处理传感器数据，形成传感器数据字典
-参数：
-    original_sensor_data: "温度:5.2, 湿度:5.3, 烟雾:5.4, 一氧化碳:5.5, 光照:5.6"
-返回值：
-    成功：{"温度":32, "湿度":21, "烟雾":55, "一氧化碳":66, "光照":88}
-    失败：{}
-"""
 def processed_sensor_data(original_sensor_data: str) -> dict:
+    """
+    功能：
+        处理传感器数据，形成传感器数据字典
+    参数：
+        original_sensor_data: "温度:5.2, 湿度:5.3, 烟雾:5.4, 一氧化碳:5.5, 光照:5.6"
+    返回值：
+        成功：{"温度":32, "湿度":21, "烟雾":55, "一氧化碳":66, "光照":88}
+        失败：{}
+    """
     try:
         sensor_data_dict = {}
         for k_v in original_sensor_data.split(','):
@@ -150,15 +150,15 @@ def processed_sensor_data(original_sensor_data: str) -> dict:
     except Exception as e:
         return {}
 
-"""
-功能：
-    过滤STM32传感器数据，保留超过阈值的传感器数据
-参数：
-    sensor_data: {"温度":32, "湿度":21, "烟雾":55, "一氧化碳":66, "光照":88}
-返回值：
-    {"温度":32, "湿度":21}
-"""
 def filter_sensor_data(sensor_data: dict) -> dict:
+    """
+    功能：
+        过滤STM32传感器数据，保留超过阈值的传感器数据
+    参数：
+        sensor_data: {"温度":32, "湿度":21, "烟雾":55, "一氧化碳":66, "光照":88}
+    返回值：
+        {"温度":32, "湿度":21}
+    """
     sensor_data_cleaned_dict = {}
 
     for key, value in sensor_data.items():
@@ -168,17 +168,17 @@ def filter_sensor_data(sensor_data: dict) -> dict:
 
     return sensor_data_cleaned_dict
 
-"""
-功能：
-    处理客户端，线程
-参数：
-    client_socket：客户端套接字
-    client_mgr：client_manager类的实例
-    AI_mgr：AI_manager类的实例
-返回值：
-    void
-"""
 def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: client_manager.client_manager, AI_mgr: AI_manager.AI_manager) -> None:
+    """
+    功能：
+        处理客户端，线程
+    参数：
+        client_socket：客户端套接字
+        client_mgr：client_manager类的实例
+        AI_mgr：AI_manager类的实例
+    返回值：
+        void
+    """
     try:
         while True:
             # 获取客户端设备id
