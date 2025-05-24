@@ -79,8 +79,10 @@ void MQ2_sensor_show_value_to_OLED(void)
 {
     float value = MQ2_get_sensor_value();
 
-    OLED_ShowNum(48, 16, (uint32_t)value, 2, OLED_8X16);
-    OLED_ShowChar(48+16, 16, '.', OLED_8X16);
-    OLED_ShowNum(48+24, 16, (uint32_t)(value * 10) % 10, 1, OLED_8X16);
+    if(value > 0){
+        OLED_ShowNum(48, 16, (uint32_t)value, 2, OLED_8X16);
+        OLED_ShowChar(48+16, 16, '.', OLED_8X16);
+        OLED_ShowNum(48+24, 16, (uint32_t)(value * 10) % 10, 1, OLED_8X16);
+        OLED_ShowString(48+32, 16, " ppm", OLED_8X16);
+    }
 }
-

@@ -80,7 +80,10 @@ void light_sensor_show_value_to_OLED(void)
 {
     float value = light_sensor_get_value();
 
-    OLED_ShowNum(48, 48, (uint32_t)value, 2, OLED_8X16);
-    OLED_ShowChar(48+16, 48, '.', OLED_8X16);
-    OLED_ShowNum(48+24, 48, (uint32_t)(value * 10) % 10, 1, OLED_8X16);
+    if(value > 0){
+        OLED_ShowNum(48, 48, (uint32_t)value, 2, OLED_8X16);
+        OLED_ShowChar(48+16, 48, '.', OLED_8X16);
+        OLED_ShowNum(48+24, 48, (uint32_t)(value * 10) % 10, 1, OLED_8X16);
+        OLED_ShowString(48+32, 48, " lux", OLED_8X16);
+    }
 }

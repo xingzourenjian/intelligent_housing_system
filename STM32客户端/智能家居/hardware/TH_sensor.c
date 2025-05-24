@@ -135,13 +135,15 @@ void DHT_sensor_show_value_to_OLED(void)
 
 	DHT_get_temp_humi_data(&humidity, &temperature); // 获取温湿度数据
 
-	OLED_ShowNum(48, 16, (uint32_t)temperature, 2, OLED_8X16); // 显示整数部分
-	OLED_ShowChar(48+16, 16, '.', OLED_8X16);
-	OLED_ShowNum(48+24, 16, (uint32_t)(temperature * 10) % 10, 1, OLED_8X16); // 显示小数部分
-	OLED_ShowString(48+32, 16, "C", OLED_8X16);
+	if(temperature > 0 && humidity > 0){
+		OLED_ShowNum(48, 16, (uint32_t)temperature, 2, OLED_8X16); // 显示整数部分
+		OLED_ShowChar(48+16, 16, '.', OLED_8X16);
+		OLED_ShowNum(48+24, 16, (uint32_t)(temperature * 10) % 10, 1, OLED_8X16); // 显示小数部分
+		OLED_ShowString(48+32, 16, " C", OLED_8X16);
 
-	OLED_ShowNum(48, 32, (uint32_t)humidity, 2, OLED_8X16);
-	OLED_ShowChar(48+16, 32, '.', OLED_8X16);
-	OLED_ShowNum(48+24, 32, (uint32_t)(humidity * 10) % 10, 1, OLED_8X16);
-	OLED_ShowString(48+32, 32, "%", OLED_8X16);
+		OLED_ShowNum(48, 32, (uint32_t)humidity, 2, OLED_8X16);
+		OLED_ShowChar(48+16, 32, '.', OLED_8X16);
+		OLED_ShowNum(48+24, 32, (uint32_t)(humidity * 10) % 10, 1, OLED_8X16);
+		OLED_ShowString(48+32, 32, " %", OLED_8X16);
+	}
 }

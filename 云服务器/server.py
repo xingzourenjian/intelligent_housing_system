@@ -238,9 +238,9 @@ def pthread_handle_client_connect(client_socket: socket.socket, client_mgr: clie
                     print(f"客户端 IP: {client_ip}, 端口: {client_port} 已断开连接！")
                     break
 
-                # 不是来自ESP01S的消息
-                if client_mgr.get_client_device_type(client_socket) != client_mgr.client_device_type_list[1]:
-                    print(f"用户 IP: {client_ip}, 端口: {client_port} 的消息：{user_message}")
+                # # 不是来自ESP01S的消息
+                # if client_mgr.get_client_device_type(client_socket) != client_mgr.client_device_type_list[1]:
+                print(f"用户IP:{client_ip},端口:{client_port} 的消息:{user_message}")
 
                 # 来自ESP01S的消息，假设是心跳包
                 if client_mgr.get_client_device_type(client_socket) == client_mgr.client_device_type_list[1]:

@@ -79,7 +79,10 @@ void MQ7_sensor_show_value_to_OLED(void)
 {
     float value = MQ7_get_sensor_value();
 
-    OLED_ShowNum(80, 32, (uint32_t)value, 2, OLED_8X16);
-    OLED_ShowChar(80+16, 32, '.', OLED_8X16);
-    OLED_ShowNum(80+24, 32, (uint32_t)(value * 10) % 10, 1, OLED_8X16);
+    if(value > 0){
+        OLED_ShowNum(80, 32, (uint32_t)value, 2, OLED_8X16);
+        OLED_ShowChar(80+16, 32, '.', OLED_8X16);
+        OLED_ShowNum(80+24, 32, (uint32_t)(value * 10) % 10, 1, OLED_8X16);
+        OLED_ShowString(80+32, 32, " ppm", OLED_8X16);
+    }
 }
