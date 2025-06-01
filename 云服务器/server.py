@@ -8,9 +8,6 @@ import time
 import AI_manager
 import client_manager
 
-"""
-如果使用抖音旗下的大模型，请添加环境变量 export DOUYIN_API_KEY="8512b578-dbb0-48a1-a3df-e26cf6f35ce0"
-"""
 # 设备指令白名单
 device_white_list = {
     '打开报警器':'buzzer_on',
@@ -111,11 +108,6 @@ ai_order = f"""\
     "message": "自然语言回复"
 }}
 """
-
-# DeepSeek大模型
-# api_key="sk-cc800fa4ad5e42ad89235a37786a1eb3"
-# base_url="https://api.deepseek.com"
-# model = "deepseek-chat" # 指定用哪个模型
 
 # 抖音旗下大模型
 api_key=os.environ.get("DOUYIN_API_KEY") # 从环境变量中读取您的方舟API Key
